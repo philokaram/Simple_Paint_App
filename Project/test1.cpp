@@ -2,60 +2,30 @@
 #include <math.h>
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/circle/Breaznham.cpp"
-HWND hStaticLabel;
+HWND hStaticBar1;
 HWND hDrawLineButton;
 HWND hDrawCircle;
-HBRUSH hBlackBrush;
+HBRUSH hBlueBrush;
 enum Shape {None,Line,Circle};
 Shape currentShape = None;
-//1. change Background
-COLORREF backgroundColor = RGB(255, 255, 255); 
-
-// top bar
-RECT topBar = {0,0,400,200};
-COLORREF topBarColor = RGB(0,0,0);
-
-//background box
-RECT backgroundBox = {0,5,0,0};
-COLORREF backgroundBoxColor = RGB(255,255,255);
-
-RECT colorBoxes[4] = {
-/*RECT = {left,top,right,bottom}*/
-    {20, 50, 70, 70},      
-    {80, 50, 130, 70},     
-    {140, 50, 190, 70},   
-    {200, 50, 250, 70}     
-};
-
-COLORREF boxColors[4] = {
-    RGB(255, 0, 0),        // Red
-    RGB(0, 255, 0),        // Green
-    RGB(0, 0, 255),        // Blue
-    RGB(0 , 0, 0)       //Black
-};
-
-
 LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
-    PAINTSTRUCT ps;
     static int x1,x2,y1,y2,count = 0;
-    static int  windowWidth,windowHight;
 	switch (m)
 	{
     case WM_CREATE:
-        // hStaticLabel = CreateWindow(
-        //     TEXT("STATIC"),
-        //     TEXT("                Background Color"),
-        //     WS_CHILD | WS_VISIBLE,
-        //     600,20,
-        //     200,50,
-        //     hwnd,
-        //     (HMENU)1,
-        //     nullptr,
-        //     nullptr
-        // );
-        
+        hStaticBar1 = CreateWindow(
+            TEXT("STATIC"),
+            nullptr,
+            WS_CHILD | WS_VISIBLE,
+            50,50,
+            600,40,
+            hwnd,
+            (HMENU)1,
+            nullptr,
+            nullptr
+        );
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("draw line"),
@@ -71,48 +41,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("draw circle"),
             WS_CHILD | WS_VISIBLE,
-            0,0,
+            250,50,
             200,40,
             hwnd,
             (HMENU)3,
             nullptr,
             nullptr
         );
+        hBlueBrush = CreateSolidBrush(RGB(0, 0, 255)); // Pure blue
 		break;
-
-    case WM_PAINT: {
-        //change background//
-        hdc = BeginPaint(hwnd, &ps);
-
-        // Fill background
-        HBRUSH bgBrush = CreateSolidBrush(backgroundColor);
-        FillRect(hdc, &ps.rcPaint, bgBrush);
-        DeleteObject(bgBrush);
-        
-        // Draw top bar
-        HBRUSH tbBrush = CreateSolidBrush(topBarColor);
-        FillRect(hdc, &topBar, tbBrush);
-        DeleteObject(tbBrush);
-       
-        // Draw background box
-        HBRUSH bbBrush = CreateSolidBrush(backgroundBoxColor);
-        FillRect(hdc, &backgroundBox, bbBrush);
-        DeleteObject(bbBrush);
-
-        // Draw color boxes
-        for (int i = 0; i < 4; ++i) {
-            HBRUSH boxBrush = CreateSolidBrush(boxColors[i]);
-            FillRect(hdc, &colorBoxes[i], boxBrush);
-            FrameRect(hdc, &colorBoxes[i], (HBRUSH)GetStockObject(BLACK_BRUSH));
-            DeleteObject(boxBrush);
-        }
-        SetTextColor(hdc, RGB(0, 0, 0));
-        SetBkMode(hdc, TRANSPARENT);
-        TextOutW(hdc, windowWidth-  190, 20,L"Background Color", 17);
-        EndPaint(hwnd, &ps);
-        return 0;
-    }
-
     case WM_CTLCOLORSTATIC:
     {
         // HDC hdcStatic = (HDC)wp;
@@ -125,9 +62,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         int ctrlId = GetDlgCtrlID(hStatic);
 
         if (ctrlId == 1) {
-            SetBkColor(hdcStatic, RGB(0, 0, 0));       // background color
+            SetBkColor(hdcStatic, RGB(0, 0, 255));       // background color
             SetTextColor(hdcStatic, RGB(255, 255, 255)); // text color
-            return (INT_PTR)hBlackBrush;
+            return (INT_PTR)hBlueBrush;
         }
     }
     case WM_COMMAND:
@@ -141,45 +78,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
     }
     case WM_CTLCOLORBTN:
-        return (LRESULT)hBlackBrush;
+        return (LRESULT)hBlueBrush;
     case WM_SIZE: {
         // Resize static bar to match width of main window
-        windowWidth = LOWORD(lp);
-        windowHight = HIWORD(lp);
-        //size top bar
-        int barHeight = windowHight*20/100; 
-        topBar.right = windowWidth;
-        topBar.bottom = barHeight;
+        int width = LOWORD(lp);
+        int height = HIWORD(lp);
 
-        //size background box
-        backgroundBox.left = windowWidth - 250;
-        backgroundBox.right = windowWidth - 5;
-        backgroundBox.bottom = barHeight - 10;
-
-        int start = windowWidth - 245;
-        for (int i = 0 ; i < 4 ; i++){
-            colorBoxes[i].bottom = barHeight - 20;
-            colorBoxes[i].left = start ;
-            colorBoxes[i].right = colorBoxes[i].left + 50;
-            start += 60;
-        }
+        int barHeight = height*15/100; 
+        MoveWindow(hStaticBar1, 0, 0, width, barHeight, TRUE);
         break;
     }
 	case WM_LBUTTONDOWN:
     {
-        if(currentShape == None){
-            // check background buttons
-            int x = LOWORD(lp);
-            int y = HIWORD(lp);
-            for (int i = 0; i < 4; ++i) {
-                if (PtInRect(&colorBoxes[i], POINT{ x, y })) {
-                    backgroundColor = boxColors[i];
-                    InvalidateRect(hwnd, NULL, TRUE);
-                    break;
-                }
-            }
-        }
-        else if(currentShape == Line){
+        if(currentShape == Line){
             if(count == 0){
                 x1 = LOWORD(lp);
                 y1 = HIWORD(lp);
@@ -206,6 +117,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 DrawCircleBres(hdc,x1, y1, r, RGB(0,0,0));
                 ReleaseDC(hwnd, hdc);
             }
+
         }
 		break;
     }
