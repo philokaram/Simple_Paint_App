@@ -1,0 +1,16 @@
+//Direct
+
+
+
+//DDA
+
+
+
+
+//Midpoint
+
+
+
+//parametric
+
+

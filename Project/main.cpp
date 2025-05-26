@@ -6,7 +6,7 @@
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
 #include "Algorithms/line/ParametricLine.cpp"
-#include "Algorithms/circle/Breaznham.cpp"
+// #include "Algorithms/circle/Breaznham.cpp"
 int min(int e1,int e2){
     if(e1 < e2)
         return e1;
@@ -283,7 +283,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
 		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
                 hdc = GetDC(hwnd);
-                DrawCircleBres(hdc,x1, y1, r, RGB(0,0,0));
+                // DrawCircleBres(hdc,x1, y1, r, RGB(0,0,0));
                 ReleaseDC(hwnd, hdc);
             }
         }
