@@ -13,25 +13,27 @@ COLORREF backgroundColor = RGB(255, 255, 255);
 
 // top bar
 RECT topBar = {0,0,400,200};
-COLORREF topBarColor = RGB(0,0,0);
+COLORREF topBarColor = RGB(50,50,50);
 
 //background box
 RECT backgroundBox = {0,5,0,0};
 COLORREF backgroundBoxColor = RGB(255,255,255);
 
-RECT colorBoxes[4] = {
+RECT colorBoxes[5] = {
 /*RECT = {left,top,right,bottom}*/
     {20, 50, 70, 70},      
     {80, 50, 130, 70},     
     {140, 50, 190, 70},   
+    {200, 50, 250, 70},     
     {200, 50, 250, 70}     
 };
 
-COLORREF boxColors[4] = {
+COLORREF boxColors[5] = {
     RGB(255, 0, 0),        // Red
     RGB(0, 255, 0),        // Green
     RGB(0, 0, 255),        // Blue
-    RGB(0 , 0, 0)       //Black
+    RGB(0 , 0, 0),       //Black
+    RGB(255 , 255, 255)       //Black
 };
 
 
@@ -71,7 +73,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("draw circle"),
             WS_CHILD | WS_VISIBLE,
-            0,0,
+            50,5,
             200,40,
             hwnd,
             (HMENU)3,
@@ -100,7 +102,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         DeleteObject(bbBrush);
 
         // Draw color boxes
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 5; ++i) {
             HBRUSH boxBrush = CreateSolidBrush(boxColors[i]);
             FillRect(hdc, &colorBoxes[i], boxBrush);
             FrameRect(hdc, &colorBoxes[i], (HBRUSH)GetStockObject(BLACK_BRUSH));
@@ -156,22 +158,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         backgroundBox.right = windowWidth - 5;
         backgroundBox.bottom = barHeight - 10;
 
-        int start = windowWidth - 245;
-        for (int i = 0 ; i < 4 ; i++){
+        int start = windowWidth - 230;
+        for (int i = 0 ; i < 5 ; i++){
             colorBoxes[i].bottom = barHeight - 20;
             colorBoxes[i].left = start ;
-            colorBoxes[i].right = colorBoxes[i].left + 50;
-            start += 60;
+            colorBoxes[i].right = colorBoxes[i].left + 35;
+            start += 40;
         }
         break;
     }
 	case WM_LBUTTONDOWN:
     {
-        if(currentShape == None){
+        int x = LOWORD(lp);
+        int y = HIWORD(lp);
+        if(y < topBar.bottom){
             // check background buttons
-            int x = LOWORD(lp);
-            int y = HIWORD(lp);
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < 5; ++i) {
                 if (PtInRect(&colorBoxes[i], POINT{ x, y })) {
                     backgroundColor = boxColors[i];
                     InvalidateRect(hwnd, NULL, TRUE);
@@ -181,12 +183,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
         else if(currentShape == Line){
             if(count == 0){
-                x1 = LOWORD(lp);
-                y1 = HIWORD(lp);
+                x1 = x;
+                y1 = y;
                 count++;
             }else{
-                x2 = LOWORD(lp);
-                y2 = HIWORD(lp);
+                x2 = x;
+                y2 = y;
                 count = 0;
             hdc = GetDC(hwnd);
             DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
@@ -194,12 +196,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }
         }else if(currentShape == Circle){
             if(count == 0){
-                x1 = LOWORD(lp);
-                y1 = HIWORD(lp);
+                x1 = x;
+                y1 = y;
                 count++;
             }else{
-                x2 = LOWORD(lp);
-                y2 = HIWORD(lp);
+                x2 = x;
+                y2 = y;
                 count = 0;
 		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
                 hdc = GetDC(hwnd);
