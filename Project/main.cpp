@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <math.h>
+#include <iostream>
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/circle/Breaznham.cpp"
 int min(int e1,int e2){
@@ -10,8 +11,13 @@ int min(int e1,int e2){
 HWND hStaticLabel;
 HWND hDrawLineButton;
 HWND hDrawCircle;
+HWND hCombo;
 HBRUSH hBlackBrush;
 enum Shape {None,Line,Circle};
+enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
+enum lineAlgorithm {none=-1,simple,dda,brsenham};
+int currentLineAlgorithm = none;
+int currentCircleAlgorithm = none;
 Shape currentShape = None;
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
@@ -51,26 +57,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 	switch (m)
 	{
     case WM_CREATE:
-        // hStaticLabel = CreateWindow(
-        //     TEXT("STATIC"),
-        //     TEXT("                Background Color"),
-        //     WS_CHILD | WS_VISIBLE,
-        //     600,20,
-        //     200,50,
-        //     hwnd,
-        //     (HMENU)1,
-        //     nullptr,
-        //     nullptr
-        // );
+        // Create a combo box (drop-down list)
+        hCombo = CreateWindowEx(
+            0,                    // Extended style
+            TEXT("COMBOBOX"),           // Class name
+            NULL,                 // No window title
+            CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_VISIBLE,
+            260, 40, 200, 300,    // x, y, width, height
+            hwnd,                 // Parent window handle
+            (HMENU)0,             // Control ID
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
+
+        // Add items to combo box
+        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 1");
+        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 2");
+        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 3");
+
+        // Optionally, set default selected item
+        SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("draw line"),
             WS_CHILD | WS_VISIBLE,
-            50,50,
+            50,5,
             200,40,
             hwnd,
-            (HMENU)2,
+            (HMENU)drawLineButtonId,
             nullptr,
             nullptr
         );
@@ -78,10 +93,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("draw circle"),
             WS_CHILD | WS_VISIBLE,
-            50,5,
+            50,50,
             200,40,
             hwnd,
-            (HMENU)3,
+            (HMENU)drawCircleButtonId,
             nullptr,
             nullptr
         );
@@ -139,14 +154,48 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     }
     case WM_COMMAND:
     {
-        if (LOWORD(wp) == 2) {
-                currentShape = Line;
-                count = 0;
-            } else if (LOWORD(wp) == 3) {
-                currentShape = Circle;
-                count = 0;
-        }else{
-            currentShape = None;
+        // When button with ID 2 is clicked
+        if (LOWORD(wp) == drawLineButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentShape = Line;
+            count = 0;
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Simple Line");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"DDA");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Brsenham");
+
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
+        else if (LOWORD(wp) == drawCircleButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentShape = Circle;
+            count = 0;
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Simple");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"iterative polar");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Brsenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"improved Brsenham");
+
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
+        
+        if (HIWORD(wp) == CBN_SELCHANGE) {
+            HWND hCombo = (HWND)lp;
+            int index = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
+            if (index != CB_ERR) {
+                if(currentShape == Line){
+                    currentLineAlgorithm = index;
+                }else if(currentShape == Circle){
+                    currentCircleAlgorithm = index;
+                }
+            }
         }
     }
     case WM_CTLCOLORBTN:
@@ -198,7 +247,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 y2 = y;
                 count = 0;
             hdc = GetDC(hwnd);
-            DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
+            if(currentLineAlgorithm == simple){
+
+            }else if ( currentLineAlgorithm == dda){
+                DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
+            }else if(currentLineAlgorithm == brsenham){
+
+            }
 			ReleaseDC(hwnd, hdc);
             }
         }else if(currentShape == Circle){
