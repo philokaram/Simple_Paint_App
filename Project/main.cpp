@@ -2,6 +2,11 @@
 #include <math.h>
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/circle/Breaznham.cpp"
+int min(int e1,int e2){
+    if(e1 < e2)
+        return e1;
+    return e2;
+}
 HWND hStaticLabel;
 HWND hDrawLineButton;
 HWND hDrawCircle;
@@ -110,7 +115,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
         SetTextColor(hdc, RGB(0, 0, 0));
         SetBkMode(hdc, TRANSPARENT);
-        TextOutW(hdc, windowWidth-  190, 20,L"Background Color", 17);
+        TextOutW(hdc, windowWidth-  190, 20,L"Background Color ", 17);
         EndPaint(hwnd, &ps);
         return 0;
     }
@@ -136,8 +141,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     {
         if (LOWORD(wp) == 2) {
                 currentShape = Line;
-        } else if (LOWORD(wp) == 3) {
+                count = 0;
+            } else if (LOWORD(wp) == 3) {
                 currentShape = Circle;
+                count = 0;
         }else{
             currentShape = None;
         }
@@ -149,7 +156,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         windowWidth = LOWORD(lp);
         windowHight = HIWORD(lp);
         //size top bar
-        int barHeight = windowHight*20/100; 
+        int barHeight = min(windowHight*20/100,105); 
         topBar.right = windowWidth;
         topBar.bottom = barHeight;
 
@@ -158,9 +165,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         backgroundBox.right = windowWidth - 5;
         backgroundBox.bottom = barHeight - 10;
 
-        int start = windowWidth - 230;
+        int start = windowWidth - 220;
         for (int i = 0 ; i < 5 ; i++){
-            colorBoxes[i].bottom = barHeight - 20;
+            colorBoxes[i].bottom = min(barHeight - 15,85);
             colorBoxes[i].left = start ;
             colorBoxes[i].right = colorBoxes[i].left + 35;
             start += 40;
