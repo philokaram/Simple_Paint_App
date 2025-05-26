@@ -3,6 +3,9 @@
 #include <iostream>
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Simple.cpp"
+#include "Algorithms/line/Bresenham.cpp"
+#include "Algorithms/line/ImprovedBresenham.cpp"
+#include "Algorithms/line/ParametricLine.cpp"
 #include "Algorithms/circle/Breaznham.cpp"
 int min(int e1,int e2){
     if(e1 < e2)
@@ -16,7 +19,7 @@ HWND hCombo;
 HBRUSH hBlackBrush;
 enum Shape {None,Line,Circle};
 enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
-enum lineAlgorithm {none=-1,simple,dda,brsenham};
+enum lineAlgorithm {none=-1,simple,dda,brsenham,improvedBrsenham,parametercLine};
 int currentLineAlgorithm = none;
 int currentCircleAlgorithm = none;
 Shape currentShape = None;
@@ -165,7 +168,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Add new items dynamically
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Simple Line");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"DDA");
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Brsenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Bresenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Improved Bresenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Parameterc Line");
 
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
@@ -257,7 +262,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }else if ( currentLineAlgorithm == dda){
                 DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }else if(currentLineAlgorithm == brsenham){
-
+                BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+            }
+            else if(currentLineAlgorithm == improvedBrsenham){
+                ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+            }
+            else if(currentLineAlgorithm == parametercLine){
+                ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }
 			ReleaseDC(hwnd, hdc);
             }
