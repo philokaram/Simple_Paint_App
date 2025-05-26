@@ -2,6 +2,7 @@
 #include <math.h>
 #include <iostream>
 #include "Algorithms/line/DDA.cpp"
+#include "Algorithms/line/Simple.cpp"
 #include "Algorithms/circle/Breaznham.cpp"
 int min(int e1,int e2){
     if(e1 < e2)
@@ -241,14 +242,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             if(count == 0){
                 x1 = x;
                 y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,RGB(0,0,0));
+                ReleaseDC(hwnd, hdc);
                 count++;
             }else{
                 x2 = x;
                 y2 = y;
                 count = 0;
-            hdc = GetDC(hwnd);
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x2,y2,RGB(255,0,0));
             if(currentLineAlgorithm == simple){
-
+                SimpleLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }else if ( currentLineAlgorithm == dda){
                 DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }else if(currentLineAlgorithm == brsenham){
