@@ -74,3 +74,22 @@ void ModifiedMidpointCircle1(HDC hdc, int xc , int yc, int r , COLORREF c){
 
 //Modified Midpoint 2 
 
+
+void ModifiedMidpointCircle2(HDC hdc, int xc , int yc, int r , COLORREF c){
+    int x = 0, y = r ,d = 1 - r , d1 = 3 , d2 = 5 - 2*r ;
+    DrawPoints(hdc,xc,yc,x,y,c);
+    while(x < y){
+        if(d < 0){
+            d +=d1;
+            d2 += 2;
+        }
+        else{
+            d += d2;
+            d2 += 4;
+            y--;
+        }
+        d1 += 2;
+        x++;
+        DrawPoints(hdc,xc,yc,x,y,c);
+    }
+}
