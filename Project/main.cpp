@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/CircleAlgorithms.cpp"
+#include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
@@ -16,15 +17,18 @@ int min(int e1,int e2){
 HWND hStaticLabel;
 HWND hDrawLineButton;
 HWND hDrawCircle;
+HWND hFill;
 HWND hCombo;
 HBRUSH hBlackBrush;
-enum Shape {None,Line,Circle};
-enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
+enum Action {None,DrawLine,DrawCircle,Fill};
+enum buttonsID {drawLineButtonId=1,drawCircleButtonId,fillButtonId};
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
 enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
+enum fillingAlgorithms {RecursiveFloodFillAlgorithms};
 int currentLineAlgorithm = DirectLineAlgorithm;
 int currentCircleAlgorithm = DirectCircleAlgorithm;
-Shape currentShape = None;
+int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
+Action currentAction = None;
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -90,7 +94,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("draw line"),
             WS_CHILD | WS_VISIBLE,
             50,5,
-            200,40,
+            100,30,
             hwnd,
             (HMENU)drawLineButtonId,
             nullptr,
@@ -100,10 +104,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("draw circle"),
             WS_CHILD | WS_VISIBLE,
-            50,50,
-            200,40,
+            50,40,
+            100,30,
             hwnd,
             (HMENU)drawCircleButtonId,
+            nullptr,
+            nullptr
+        );
+        hFill = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Fill"),
+            WS_CHILD | WS_VISIBLE,
+            50,75,
+            100,30,
+            hwnd,
+            (HMENU)fillButtonId,
             nullptr,
             nullptr
         );
@@ -163,7 +178,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     {
         // When button with ID 2 is clicked
         if (LOWORD(wp) == drawLineButtonId && HIWORD(wp) == BN_CLICKED) {
-            currentShape = Line;
+            currentAction = DrawLine;
             count = 0;
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
@@ -179,7 +194,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
         else if (LOWORD(wp) == drawCircleButtonId && HIWORD(wp) == BN_CLICKED) {
-            currentShape = Circle;
+            currentAction = DrawCircle;
             count = 0;
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
@@ -195,15 +210,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
+        else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Fill ;
+            count = 0;
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Recursive Flood Fill");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Non-Recursive Flood Fill");
+           
+
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
         
         if (HIWORD(wp) == CBN_SELCHANGE) {
             HWND hCombo = (HWND)lp;
             int index = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
             if (index != CB_ERR) {
-                if(currentShape == Line){
+                if(currentAction == DrawLine){
                     currentLineAlgorithm = index;
-                }else if(currentShape == Circle){
+                }else if(currentAction == DrawCircle){
                     currentCircleAlgorithm = index;
+                }
+                else if(currentAction == Fill){
+                    currentFillAlgorithm = index;
                 }
             }
         }
@@ -247,7 +279,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
             }
         }
-        else if(currentShape == Line){
+        else if(currentAction == DrawLine){
             if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -276,7 +308,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 // }
                 ReleaseDC(hwnd, hdc);
             }
-        }else if(currentShape == Circle){
+        }else if(currentAction == DrawCircle){
             if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -299,7 +331,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == PolarCircleAlgorithm)
                 {
-
+                    
                 }
                 else if (currentCircleAlgorithm == IterativePolarCircleAlgorithm)
                 {
@@ -320,6 +352,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 ReleaseDC(hwnd, hdc);
             }
+        }else if( currentAction == Fill){
+            if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
+            {
+                hdc = GetDC(hwnd);
+                RecursiveFloodFill(hdc,x,y,backgroundColor,RGB(0,0,0));
+                ReleaseDC(hwnd, hdc);
+            }
+            
         }
 		break;
     }
