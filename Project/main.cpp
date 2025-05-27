@@ -2,12 +2,12 @@
 #include <math.h>
 #include <iostream>
 #include "Algorithms/LineAlgorithms.cpp"
+#include "Algorithms/CircleAlgorithms.cpp"
 #include "Algorithms/line/DDA.cpp"
-#include "Algorithms/line/Simple.cpp"
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
 #include "Algorithms/line/ParametricLine.cpp"
-// #include "Algorithms/circle/Breaznham.cpp"
+
 int min(int e1,int e2){
     if(e1 < e2)
         return e1;
@@ -20,9 +20,10 @@ HWND hCombo;
 HBRUSH hBlackBrush;
 enum Shape {None,Line,Circle};
 enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
-enum lineAlgorithm {none=-1,DiectLineAlgorithm,dda,brsenham,improvedBrsenham,parametercLine};
-int currentLineAlgorithm = none;
-int currentCircleAlgorithm = none;
+enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ImprovedMidpointLineAlgorithm};
+enum circleAlgorithm {DirectCircleAlgorithm,DDACircleAlgorithm,MidpointCircleAlgorithm,ImprovedMidpointCircleAlgorithm};
+int currentLineAlgorithm = DirectLineAlgorithm;
+int currentCircleAlgorithm = DirectCircleAlgorithm;
 Shape currentShape = None;
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
@@ -61,6 +62,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     static int  windowWidth,windowHight;
 	switch (m)
 	{
+
     case WM_CREATE:
         // Create a combo box (drop-down list)
         hCombo = CreateWindowEx(
@@ -183,7 +185,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
 
             // Add new items dynamically
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Simple");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"iterative polar");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Brsenham");
@@ -258,33 +260,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,RGB(255,0,0));
-            if(currentLineAlgorithm == DiectLineAlgorithm){
-                DirectLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
-            }else if ( currentLineAlgorithm == dda){
-                DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
-            }else if(currentLineAlgorithm == brsenham){
-                BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
-            }
-            else if(currentLineAlgorithm == improvedBrsenham){
+                if(currentLineAlgorithm == DirectLineAlgorithm){
+                    DirectLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                }else if ( currentLineAlgorithm == DDALineAlgorithm){
+                    DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                }else if(currentLineAlgorithm == MidpointLineAlgorithm){
+                    BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                }
+            else if(currentLineAlgorithm == ImprovedMidpointLineAlgorithm){
                 ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }
-            else if(currentLineAlgorithm == parametercLine){
-                ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
-            }
-			ReleaseDC(hwnd, hdc);
+            // else if(currentLineAlgorithm == parametercLine){
+                //     ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                // }
+                ReleaseDC(hwnd, hdc);
             }
         }else if(currentShape == Circle){
             if(count == 0){
                 x1 = x;
                 y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,RGB(0,0,0));
+                ReleaseDC(hwnd, hdc);
                 count++;
             }else{
                 x2 = x;
                 y2 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x2,y2,RGB(255,0,0));
+                ReleaseDC(hwnd, hdc);
                 count = 0;
 		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
                 hdc = GetDC(hwnd);
-                // DrawCircleBres(hdc,x1, y1, r, RGB(0,0,0));
+                if (currentCircleAlgorithm == DirectCircleAlgorithm)
+                {
+                    DirectCircle(hdc,x1,y1,r,RGB(0,0,0));
+                }
                 ReleaseDC(hwnd, hdc);
             }
         }

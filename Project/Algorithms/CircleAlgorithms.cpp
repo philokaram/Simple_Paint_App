@@ -17,12 +17,13 @@ void DrawPoints(HDC hdc, int xc ,int yc ,int x ,int y ,COLORREF c){
 //Direct
 void DirectCircle(HDC hdc , int xc , int yc ,int r ,COLORREF c){
     int x = 0;
-    double y = r;
-    DrawPoints(hdc,xc,xc,x,y,c);
+    int y = r;
+    int r2 = r*r;
+    DrawPoints(hdc,xc,yc,x,y,c);
     while (x < y)
     {
-        y = sqrt((r*r) -(x*x));
-        DrawPoints(hdc,xc,yc,x,(int)(y+0.5),c);
+        y = (int)(sqrt( r2 -(x*x))+0.5);
+        DrawPoints(hdc,xc,yc,x,y,c);
         x++;
     }
     
