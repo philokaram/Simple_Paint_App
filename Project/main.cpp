@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <math.h>
 #include <iostream>
+#include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Simple.cpp"
 #include "Algorithms/line/Bresenham.cpp"
@@ -19,7 +20,7 @@ HWND hCombo;
 HBRUSH hBlackBrush;
 enum Shape {None,Line,Circle};
 enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
-enum lineAlgorithm {none=-1,simple,dda,brsenham,improvedBrsenham,parametercLine};
+enum lineAlgorithm {none=-1,DiectLineAlgorithm,dda,brsenham,improvedBrsenham,parametercLine};
 int currentLineAlgorithm = none;
 int currentCircleAlgorithm = none;
 Shape currentShape = None;
@@ -166,7 +167,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
 
             // Add new items dynamically
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Simple Line");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"DDA");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Bresenham");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Improved Bresenham");
@@ -257,8 +258,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,RGB(255,0,0));
-            if(currentLineAlgorithm == simple){
-                SimpleLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+            if(currentLineAlgorithm == DiectLineAlgorithm){
+                DirectLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }else if ( currentLineAlgorithm == dda){
                 DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }else if(currentLineAlgorithm == brsenham){
