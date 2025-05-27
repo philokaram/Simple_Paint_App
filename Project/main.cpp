@@ -20,8 +20,8 @@ HWND hCombo;
 HBRUSH hBlackBrush;
 enum Shape {None,Line,Circle};
 enum buttonsID {drawLineButtonId=1,drawCircleButtonId};
-enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ImprovedMidpointLineAlgorithm};
-enum circleAlgorithm {DirectCircleAlgorithm,DDACircleAlgorithm,MidpointCircleAlgorithm,ImprovedMidpointCircleAlgorithm};
+enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
+enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
 int currentLineAlgorithm = DirectLineAlgorithm;
 int currentCircleAlgorithm = DirectCircleAlgorithm;
 Shape currentShape = None;
@@ -171,8 +171,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Add new items dynamically
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"DDA");
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Bresenham");
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Improved Bresenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Midpoint");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Modified Midpoint");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Parameterc Line");
 
             // Set default selection
@@ -188,8 +188,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"iterative polar");
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Brsenham");
-            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"improved Brsenham");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Midpoint");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Modified Midpoint 1");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Modified Midpoint 2");
 
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
@@ -267,7 +268,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
                     BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
                 }
-            else if(currentLineAlgorithm == ImprovedMidpointLineAlgorithm){
+            else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
                 ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
             }
             // else if(currentLineAlgorithm == parametercLine){
@@ -295,6 +296,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 if (currentCircleAlgorithm == DirectCircleAlgorithm)
                 {
                     DirectCircle(hdc,x1,y1,r,RGB(0,0,0));
+                }
+                else if (currentCircleAlgorithm == PolarCircleAlgorithm)
+                {
+
+                }
+                else if (currentCircleAlgorithm == IterativePolarCircleAlgorithm)
+                {
+                    
+                }
+                else if (currentCircleAlgorithm == MidpointCircleAlgorithm)
+                {
+                    
+                }
+                else if (currentCircleAlgorithm == ModifiedMidpointCircleAlgorithm1)
+                {
+                    ModifiedMidpointCircle1(hdc,x1,y1,r,RGB(0,0,0));
+                }
+                else if (currentCircleAlgorithm == ModifiedMidpointCircleAlgorithm2)
+                {
+                    
                 }
                 ReleaseDC(hwnd, hdc);
             }

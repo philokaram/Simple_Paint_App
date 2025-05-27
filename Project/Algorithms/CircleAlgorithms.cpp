@@ -52,9 +52,25 @@ void DirectCircle(HDC hdc , int xc , int yc ,int r ,COLORREF c){
 
 
 
-//Modified Midpoint
+//Modified Midpoint 1
+
+void ModifiedMidpointCircle1(HDC hdc, int xc , int yc, int r , COLORREF c){
+    int x = 0, y = r ,d = 1 -r;
+    DrawPoints(hdc,xc,yc,x,y,c);
+    while(x < y){
+        if(d < 0){
+            d += 2*x +3;
+        }
+        else{
+            d += 2*(x-y) +5;
+            y--;
+        }
+        x++;
+        DrawPoints(hdc,xc,yc,x,y,c);
+    }
+}
 
 
 
-
+//Modified Midpoint 2 
 
