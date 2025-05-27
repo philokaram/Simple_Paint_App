@@ -24,6 +24,7 @@ HWND hCombo;
 HBRUSH hBlackBrush;
 
 
+
 enum Action {None,DrawLine,DrawCircle,Fill};
 Action currentAction = None;
 
@@ -48,8 +49,8 @@ COLORREF topBarColor = RGB(50,50,50);
 RECT backgroundBox = {0,5,0,0};
 COLORREF backgroundBoxColor = RGB(255,255,255);
 
-RECT colorBoxes[5] = {
-/*RECT = {left,top,right,bottom}*/
+RECT backgroundColorBoxes[5] = {
+    /*RECT = {left,top,right,bottom}*/
     {20, 50, 70, 70},      
     {80, 50, 130, 70},     
     {140, 50, 190, 70},   
@@ -57,7 +58,7 @@ RECT colorBoxes[5] = {
     {200, 50, 250, 70}     
 };
 
-COLORREF boxColors[5] = {
+COLORREF backgroundBoxColors[5] = {
     RGB(255, 0, 0),        // Red
     RGB(0, 255, 0),        // Green
     RGB(0, 0, 255),        // Blue
@@ -65,6 +66,28 @@ COLORREF boxColors[5] = {
     RGB(255 , 255, 255)       //Black
 };
 
+
+//shape color box
+RECT shapeColorBox = {0,5,0,0};
+COLORREF shapeColorBoxColor = RGB(255,255,255);
+COLORREF shapeColor = RGB(0,0,0);
+
+RECT shapeColorBoxes[5] = {
+    /*RECT = {left,top,right,bottom}*/
+    {20, 50, 70, 70},      
+    {80, 50, 130, 70},     
+    {140, 50, 190, 70},   
+    {200, 50, 250, 70},     
+    {200, 50, 250, 70}     
+};
+
+COLORREF shapeBoxColors[5] = {
+    RGB(255, 0, 0),        // Red
+    RGB(0, 255, 0),        // Green
+    RGB(0, 0, 255),        // Blue
+    RGB(0 , 0, 0),       //Black
+    RGB(255 , 255, 255)       //Black
+};
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
@@ -150,17 +173,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         HBRUSH bbBrush = CreateSolidBrush(backgroundBoxColor);
         FillRect(hdc, &backgroundBox, bbBrush);
         DeleteObject(bbBrush);
-
-        // Draw color boxes
+        
+        // Draw background color boxes
         for (int i = 0; i < 5; ++i) {
-            HBRUSH boxBrush = CreateSolidBrush(boxColors[i]);
-            FillRect(hdc, &colorBoxes[i], boxBrush);
-            FrameRect(hdc, &colorBoxes[i], (HBRUSH)GetStockObject(BLACK_BRUSH));
+            HBRUSH boxBrush = CreateSolidBrush(backgroundBoxColors[i]);
+            FillRect(hdc, &backgroundColorBoxes[i], boxBrush);
+            FrameRect(hdc, &backgroundColorBoxes[i], (HBRUSH)GetStockObject(BLACK_BRUSH));
+            DeleteObject(boxBrush);
+        }
+
+        // Draw background box
+        bbBrush = CreateSolidBrush(shapeColorBoxColor);
+        FillRect(hdc, &shapeColorBox, bbBrush);
+        DeleteObject(bbBrush);
+        
+        // Draw shape color boxes
+        for (int i = 0; i < 5; ++i) {
+            HBRUSH boxBrush = CreateSolidBrush(shapeBoxColors[i]);
+            FillRect(hdc, &shapeColorBoxes[i], boxBrush);
+            FrameRect(hdc, &shapeColorBoxes[i], (HBRUSH)GetStockObject(BLACK_BRUSH));
             DeleteObject(boxBrush);
         }
         SetTextColor(hdc, RGB(0, 0, 0));
         SetBkMode(hdc, TRANSPARENT);
         TextOutW(hdc, windowWidth-  190, 20,L"Background Color ", 17);
+        TextOutW(hdc, windowWidth-  410, 20,L"Shape Color          ", 17);
         EndPaint(hwnd, &ps);
         return 0;
     }
@@ -265,11 +302,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         backgroundBox.right = windowWidth - 5;
         backgroundBox.bottom = barHeight - 10;
 
+        
         int start = windowWidth - 220;
         for (int i = 0 ; i < 5 ; i++){
-            colorBoxes[i].bottom = min(barHeight - 15,85);
-            colorBoxes[i].left = start ;
-            colorBoxes[i].right = colorBoxes[i].left + 35;
+            backgroundColorBoxes[i].bottom = min(barHeight - 15,85);
+            backgroundColorBoxes[i].left = start ;
+            backgroundColorBoxes[i].right = backgroundColorBoxes[i].left + 35;
+            start += 40;
+        }
+        
+        //size shape color box
+        shapeColorBox.left = windowWidth - 500;
+        shapeColorBox.right = windowWidth -255;
+        shapeColorBox.bottom = barHeight - 10;
+
+        start = windowWidth - 470;
+        for (int i = 0 ; i < 5 ; i++){
+            shapeColorBoxes[i].bottom = min(barHeight - 15,85);
+            shapeColorBoxes[i].left = start ;
+            shapeColorBoxes[i].right = shapeColorBoxes[i].left + 35;
             start += 40;
         }
         break;
@@ -281,9 +332,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if(y < topBar.bottom){
             // check background buttons
             for (int i = 0; i < 5; ++i) {
-                if (PtInRect(&colorBoxes[i], POINT{ x, y })) {
-                    backgroundColor = boxColors[i];
+                if (PtInRect(&backgroundColorBoxes[i], POINT{ x, y })) {
+                    backgroundColor = backgroundBoxColors[i];
                     InvalidateRect(hwnd, NULL, TRUE);
+                    break;
+                }
+            }
+
+            for (int i = 0; i < 5; ++i) {
+                if (PtInRect(&shapeColorBoxes[i], POINT{ x, y })) {
+                    shapeColor = shapeBoxColors[i];
                     break;
                 }
             }
@@ -293,7 +351,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 x1 = x;
                 y1 = y;
                 hdc = GetDC(hwnd);
-                SetPixel(hdc,x1,y1,RGB(0,0,0));
+                SetPixel(hdc,x1,y1,shapeColor);
                 ReleaseDC(hwnd, hdc);
                 count++;
             }else{
@@ -301,19 +359,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 y2 = y;
                 count = 0;
                 hdc = GetDC(hwnd);
-                SetPixel(hdc,x2,y2,RGB(255,0,0));
+                SetPixel(hdc,x2,y2,shapeColor);
                 if(currentLineAlgorithm == DirectLineAlgorithm){
-                    DirectLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    DirectLine(hdc,x1,y1, x2, y2,shapeColor);
                 }else if ( currentLineAlgorithm == DDALineAlgorithm){
-                    DrawLineDDA(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
-                    BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    BresenhamLine(hdc,x1,y1, x2, y2,shapeColor);
                 }
                 else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
-                    ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    ImprovedBresenhamLine(hdc,x1,y1, x2, y2, shapeColor);
                 }
                 // else if(currentLineAlgorithm == parametercLine){
-                    //     ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    //     ParametrecLine(hdc,x1,y1, x2, y2, shapeColor);
                     // }
                     ReleaseDC(hwnd, hdc);
             }
@@ -322,21 +380,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 x1 = x;
                 y1 = y;
                 hdc = GetDC(hwnd);
-                SetPixel(hdc,x1,y1,RGB(0,0,0));
+                SetPixel(hdc,x1,y1,shapeColor);
                 ReleaseDC(hwnd, hdc);
                 count++;
             }else{
                 x2 = x;
                 y2 = y;
                 hdc = GetDC(hwnd);
-                SetPixel(hdc,x2,y2,RGB(255,0,0));
+                SetPixel(hdc,x2,y2,shapeColor);
                 ReleaseDC(hwnd, hdc);
                 count = 0;
 		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
                 hdc = GetDC(hwnd);
                 if (currentCircleAlgorithm == DirectCircleAlgorithm)
                 {
-                    DirectCircle(hdc,x1,y1,r,RGB(0,0,0));
+                    DirectCircle(hdc,x1,y1,r,shapeColor);
                 }
                 else if (currentCircleAlgorithm == PolarCircleAlgorithm)
                 {
@@ -352,11 +410,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == ModifiedMidpointCircleAlgorithm1)
                 {
-                    ModifiedMidpointCircle1(hdc,x1,y1,r,RGB(0,0,0));
+                    ModifiedMidpointCircle1(hdc,x1,y1,r,shapeColor);
                 }
                 else if (currentCircleAlgorithm == ModifiedMidpointCircleAlgorithm2)
                 {
-                    ModifiedMidpointCircle2(hdc,x1,y1,r,RGB(0,0,0));
+                    ModifiedMidpointCircle2(hdc,x1,y1,r,shapeColor);
                     
                 }
                 ReleaseDC(hwnd, hdc);
@@ -365,7 +423,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             hdc = GetDC(hwnd);
             if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
             {
-                RecursiveFloodFill(hdc,x,y,backgroundColor,RGB(0,0,0));
+                RecursiveFloodFill(hdc,x,y,backgroundColor,shapeColor);
             }
             else if (currentFillAlgorithm == NonRecursiveFloodFillAlgorithms)
             {
@@ -381,7 +439,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     x1 = x;
                     y1 = y;
                     hdc = GetDC(hwnd);
-                    SetPixel(hdc,x1,y1,RGB(0,0,0));
+                    SetPixel(hdc,x1,y1,shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count++;
                 }
@@ -389,7 +447,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     x2 = x;
                     y2 = y;
                     hdc = GetDC(hwnd);
-                    SetPixel(hdc,x2,y2,RGB(0,0,0));
+                    SetPixel(hdc,x2,y2,shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count++;
                 }
@@ -397,14 +455,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     x3 = x;
                     y3 = y;
                     hdc = GetDC(hwnd);
-                    SetPixel(hdc,x3,y3,RGB(0,0,0));
+                    SetPixel(hdc,x3,y3,shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count++;
                 }
                 else {
                     Point points[4] = {Point(x1,y1),Point(x2,y2),Point(x3,y3),Point(x,y)};
                     hdc = GetDC(hwnd);
-                    NonConvexFilling(hdc,points,4,RGB(255,0,0));
+                    NonConvexFilling(hdc,points,4,shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count = 0;
                 }
