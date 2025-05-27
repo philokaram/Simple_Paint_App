@@ -1,4 +1,6 @@
 #include <Windows.h>
+#include "../Utility.cpp"
+
 /*
 
 //the given
@@ -30,22 +32,6 @@ void BezierCurve(HDC hdc, int x1 , int y1 , int x2 , int y2,int x3 , int y3 ,int
 }
 
 // recursive bezier curve
-struct Point
-{
-    double x,y;
-    Point(double x = 0.0, double y = 0.0):x(x),y(y) {}
-};
-
-Point operator*(double d, Point p){
-    return Point(p.x *d, p.y *d);
-}
-
-Point operator+(Point p1, Point p2){
-    return Point(p1.x + p2.x, p1.y + p2.y);
-}
-Point operator-(Point p1, Point p2){
-    return Point(p1.x - p2.x, p1.y - p2.y);
-}
 
 Point BezierValue(double t,Point * points, int start , int end){
     if (start == end)

@@ -1,9 +1,11 @@
 #include <Windows.h>
 #include <math.h>
 #include <iostream>
+#include "Algorithms/Utility.cpp"
 #include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/CircleAlgorithms.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
+#include "Algorithms/Filling/ConvexAndNonConvex.cpp"
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
@@ -20,15 +22,21 @@ HWND hDrawCircle;
 HWND hFill;
 HWND hCombo;
 HBRUSH hBlackBrush;
+
+
 enum Action {None,DrawLine,DrawCircle,Fill};
-enum buttonsID {drawLineButtonId=1,drawCircleButtonId,fillButtonId};
-enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
-enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
-enum fillingAlgorithms {RecursiveFloodFillAlgorithms};
-int currentLineAlgorithm = DirectLineAlgorithm;
-int currentCircleAlgorithm = DirectCircleAlgorithm;
-int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
 Action currentAction = None;
+
+enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
+int currentLineAlgorithm = DirectLineAlgorithm;
+
+enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
+int currentCircleAlgorithm = DirectCircleAlgorithm;
+
+enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgorithms,ConvexFillAlgorithms,NonConvexFillAlgorithms};
+int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
+
+enum buttonsID {drawLineButtonId=1,drawCircleButtonId,fillButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -62,7 +70,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,count = 0;
+    static int x1,x2,y1,y2,x3,y3,count = 0;
     static int  windowWidth,windowHight;
 	switch (m)
 	{
@@ -212,15 +220,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
-            count = 0;
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
-
+            
             // Add new items dynamically
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Recursive Flood Fill");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Non-Recursive Flood Fill");
-           
-
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Convex Fill");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Non Convex Fill");
+            
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
@@ -229,6 +237,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             HWND hCombo = (HWND)lp;
             int index = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
             if (index != CB_ERR) {
+                count = 0;
                 if(currentAction == DrawLine){
                     currentLineAlgorithm = index;
                 }else if(currentAction == DrawCircle){
@@ -300,13 +309,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
                     BresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
                 }
-            else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
-                ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
-            }
-            // else if(currentLineAlgorithm == parametercLine){
-                //     ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
-                // }
-                ReleaseDC(hwnd, hdc);
+                else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
+                    ImprovedBresenhamLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                }
+                // else if(currentLineAlgorithm == parametercLine){
+                    //     ParametrecLine(hdc,x1,y1, x2, y2, RGB(0,0,0));
+                    // }
+                    ReleaseDC(hwnd, hdc);
             }
         }else if(currentAction == DrawCircle){
             if(count == 0){
@@ -353,12 +362,62 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 ReleaseDC(hwnd, hdc);
             }
         }else if( currentAction == Fill){
+            hdc = GetDC(hwnd);
             if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
             {
-                hdc = GetDC(hwnd);
                 RecursiveFloodFill(hdc,x,y,backgroundColor,RGB(0,0,0));
-                ReleaseDC(hwnd, hdc);
             }
+            else if (currentFillAlgorithm == NonRecursiveFloodFillAlgorithms)
+            {
+                
+            }
+            else if (currentFillAlgorithm == ConvexFillAlgorithms)
+            {
+                
+            }
+            else if (currentFillAlgorithm == NonConvexFillAlgorithms)
+            {
+                if(count == 0){
+                    x1 = x;
+                    y1 = y;
+                    hdc = GetDC(hwnd);
+                    SetPixel(hdc,x1,y1,RGB(0,0,0));
+                    ReleaseDC(hwnd, hdc);
+                    count++;
+                }
+                else if(count == 1){
+                    x2 = x;
+                    y2 = y;
+                    hdc = GetDC(hwnd);
+                    SetPixel(hdc,x2,y2,RGB(0,0,0));
+                    ReleaseDC(hwnd, hdc);
+                    count++;
+                }
+                else if(count == 2){
+                    x3 = x;
+                    y3 = y;
+                    hdc = GetDC(hwnd);
+                    SetPixel(hdc,x3,y3,RGB(0,0,0));
+                    ReleaseDC(hwnd, hdc);
+                    count++;
+                }
+                else {
+                    Point points[4] = {Point(x1,y1),Point(x2,y2),Point(x3,y3),Point(x,y)};
+                    hdc = GetDC(hwnd);
+                    NonConvexFilling(hdc,points,4,RGB(255,0,0));
+                    ReleaseDC(hwnd, hdc);
+                    count = 0;
+                }
+            }
+            else if (currentFillAlgorithm == None)
+            {
+                
+            }
+            else if (currentFillAlgorithm == None)
+            {
+                
+            }
+            ReleaseDC(hwnd, hdc);
             
         }
 		break;
