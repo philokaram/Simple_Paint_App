@@ -423,11 +423,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             hdc = GetDC(hwnd);
             if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
             {
-                RecursiveFloodFill(hdc,x,y,backgroundColor,shapeColor);
+                RecursiveFloodFill(hdc,x,y,shapeColor);
             }
             else if (currentFillAlgorithm == NonRecursiveFloodFillAlgorithms)
             {
-                
+                NonRecursiveFloodFill(hdc,x,y,shapeColor);
             }
             else if (currentFillAlgorithm == ConvexFillAlgorithms)
             {
