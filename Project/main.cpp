@@ -114,7 +114,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0,a,b,polygon_points_count, xl, xr, yb, yt;
+    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,r,count = 0,a,b,polygon_points_count, xl, xr, yb, yt;
     static std::vector<Point> p = {0, 0, 0, 0, 0};
     static int  windowWidth,windowHight;
 	switch (m)
@@ -491,7 +491,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             int y = HIWORD(lp);
             if(currentClipAlgorithm == PointClipping){
                 if(currentClipWindowShape == CircleWindow){
-                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
                     if(PointCircleClipping(x,y,xc1,yc1,r)){
                         break;
                     }
@@ -563,7 +563,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,shapeColor);
-                if(currentClipAlgorithm == LineClipping){
+                if(currentClipAlgorithm == LineClipping && currentClipWindowShape == RectangleWindow){
                     Point p1(x1,y1);
                     Point p2(x2,y2);
                     if(LineRectangleClipping(p1,p2,xc1,xc2,yc1,yc2)){
@@ -573,7 +573,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     y1 = p1.y;
                     x2 = p2.x;
                     y2 = p2.y;
+
+                } else if(currentClipAlgorithm == LineClipping && currentClipWindowShape == CircleWindow) {
+                    r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    DrawLineClippedByCircle(hdc, x1, y1, x2, y2, xc1, yc1, r, shapeColor);
+                    std::cout << currentClipAlgorithm << "\n";
+                    std::cout << currentClipWindowShape << "\n";
+                    break;
                 }
+
                 if(currentLineAlgorithm == DirectLineAlgorithm){
                     DirectLine(hdc,x1,y1, x2, y2,shapeColor);
                 }else if ( currentLineAlgorithm == DDALineAlgorithm){
@@ -780,7 +788,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                                 // p[2] = Point(230, 230);
                                 // p[3] = Point(170, 200);
                                 // p[4] = Point(130, 170);
-                                
+
                                 // std::cout << xc1 << " " << yc1 << std::endl;
                                 // std::cout << xc2 << " " << yc2 << std::endl;
                                 
