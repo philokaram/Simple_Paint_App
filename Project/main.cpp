@@ -6,6 +6,7 @@
 #include "Algorithms/CircleAlgorithms.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
+#include "Algorithms/Clipping/CircleClipping.cpp"
 #include "Algorithms/Clipping/RectangleClipping.cpp"
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Bresenham.cpp"
@@ -18,6 +19,8 @@ int min(int e1,int e2){
     return e2;
 }
 HWND hStaticLabel;
+HWND hWriteButton;
+HWND hEraseButton;
 HWND hDrawLineButton;
 HWND hDrawCircle;
 HWND hFill;
@@ -26,9 +29,11 @@ HWND hCombo;
 HWND hClipWindow;
 HBRUSH hBlackBrush;
 
+bool isWrite = false;
+bool isErase = false;
 
 
-enum Action {None,DrawLine,DrawCircle,Fill,Clip};
+enum Action {None,Write,Erase,DrawLine,DrawCircle,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -40,13 +45,13 @@ int currentCircleAlgorithm = DirectCircleAlgorithm;
 enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgorithms,ConvexFillAlgorithms,NonConvexFillAlgorithms};
 int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
 
-enum clippingAlgorithms {NoClipping = -1,PointClipping,LineClipping,PolygonClipping};
-int currentClipAlgorithm = NoClipping;
+enum clippingAlgorithms {PointClipping,LineClipping,PolygonClipping};
+int currentClipAlgorithm = PointClipping;
 
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -141,6 +146,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Square");
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Circle");
 
+        hWriteButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Wirte"),
+            WS_CHILD | WS_VISIBLE,
+            5,5,
+            40,30,
+            hwnd,
+            (HMENU)writeButtonId,
+            nullptr,
+            nullptr
+        );
+        hEraseButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Erase"),
+            WS_CHILD | WS_VISIBLE,
+            5,40,
+            40,30,
+            hwnd,
+            (HMENU)eraseButtonId,
+            nullptr,
+            nullptr
+        );
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("draw line"),
@@ -325,6 +352,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
             SendMessage(hClipWindow, CB_SETCURSEL, 0, 0);
         }
+        else if (LOWORD(wp) == writeButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Write ;
+            ShowWindow(hCombo, SW_HIDE);
+            ShowWindow(hClipWindow, SW_HIDE);
+        }
+        else if (LOWORD(wp) == eraseButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Erase ;
+            ShowWindow(hCombo, SW_HIDE);
+            ShowWindow(hClipWindow, SW_HIDE);
+        }
         //   event     == select item event
         if (HIWORD(wp) == CBN_SELCHANGE) { 
             int controlID = LOWORD(wp);  // Which control sent the message?
@@ -390,6 +427,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
         break;
     }
+    case WM_MOUSEMOVE:{
+        if(currentAction == Write && isWrite){
+            int x = LOWORD(lp);
+            int y = HIWORD(lp);
+            if(currentClipAlgorithm == PointClipping){
+                if(currentClipWindowShape == CircleWindow){
+                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    if(PointCircleClipping(x,y,xc1,yc1,r)){
+                        break;
+                    }
+                }
+            }
+            hdc = GetDC(hwnd);
+            SetPixel(hdc,x,y,shapeColor);
+            ReleaseDC(hwnd, hdc);
+        }
+        else if(currentAction == Erase && isErase){
+            int x = LOWORD(lp);
+            int y = HIWORD(lp);
+            hdc = GetDC(hwnd);
+            DirectCircle(hdc,x,y,3,backgroundColor);
+            SetPixel(hdc,x,y,backgroundColor);
+            ReleaseDC(hwnd, hdc);
+        }
+        break;
+    }
+    case WM_LBUTTONUP:{
+        isWrite = false;
+        isErase = false;
+        break;
+    }
 	case WM_LBUTTONDOWN:
     {
         int x = LOWORD(lp);
@@ -410,6 +478,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     break;
                 }
             }
+        }
+        else if(currentAction == Write){
+            isWrite = true;
+        }
+        else if(currentAction == Erase){
+            isErase = true;
         }
         else if(currentAction == DrawLine){
             if(count == 0){
@@ -563,20 +637,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 xc2 = x;
                 yc2 = y;
                 count = 0;
-                if(currentClipWindowShape == RectangleWindow){
-                    hdc = GetDC(hwnd);
+                hdc = GetDC(hwnd);
+                if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
                     DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
                     DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
                     DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
                     DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
-                    ReleaseDC(hwnd,hdc);
+                }else if(currentClipWindowShape == CircleWindow){
+                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    ModifiedMidpointCircle2(hdc,xc1,yc1,r,shapeColor);
                 }
+                ReleaseDC(hwnd,hdc);
             }
         }
 		break;
     }
-	case WM_LBUTTONUP:
-		break;
 	case WM_CLOSE:
 		DestroyWindow(hwnd); break;
 	case WM_DESTROY:

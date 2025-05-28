@@ -2,7 +2,7 @@
 //point 
 
 bool PointCircleClipping(int x, int y,int xc,int yc, int r){
-    return (xc*xc) + (yc*yc) - (r*r) > 0 ;
+    return pow(x - xc,2) + pow(y -yc ,2) - (r*r) > 0 ;
 }
 
 
