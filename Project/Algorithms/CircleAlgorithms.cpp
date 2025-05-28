@@ -32,6 +32,24 @@ void DirectCircle(HDC hdc , int xc , int yc ,int r ,COLORREF c){
 
 //Polar
 
+void CirclePolarEff(HDC hdc, int xc, int yc, int r, COLORREF c) {
+
+    double x = r;
+    double y = 0;
+    double dTheta = 1.0/r;
+
+    DrawPoints(hdc, xc, yc, x, y, c);
+
+    while (x > y) {
+        int xtemp = x;
+        x = x * cos(dTheta) - y * sin(dTheta);
+        y = xtemp * sin(dTheta) + y * cos(dTheta);
+
+        DrawPoints(hdc, xc, yc, round(x), round(y), c);
+    }
+
+
+}
 
 
 

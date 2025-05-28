@@ -577,6 +577,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == PolarCircleAlgorithm)
                 {
+                    CirclePolarEff(hdc, x1, y1, r, shapeColor);
                     
                 }
                 else if (currentCircleAlgorithm == IterativePolarCircleAlgorithm)
