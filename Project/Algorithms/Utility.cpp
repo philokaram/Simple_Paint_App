@@ -1,5 +1,6 @@
 #include <vector>
 #include <fstream>
+#include <string>
 
 struct Point
 {
@@ -169,4 +170,57 @@ std::vector<std::vector<COLORREF>> GetPixels(HWND hwnd, int capture_width, int c
     ReleaseDC(hwnd, hdcWindow);
 
     return pixels_to_save;
+}
+
+std::vector<std::vector<COLORREF>> loadBMP(const std::string& filename) {
+    std::vector<std::vector<COLORREF>> pixels;
+    std::ifstream inFile(filename, std::ios::binary);
+
+    if (!inFile.is_open()) {
+        std::cerr << "Error: Could not open file for reading: " << filename << std::endl;
+        return pixels; // Return empty vector
+    }
+
+    BMPFileHeader fileHeader;
+    BMPInfoHeader infoHeader;
+
+    inFile.read(reinterpret_cast<char*>(&fileHeader), sizeof(fileHeader));
+    inFile.read(reinterpret_cast<char*>(&infoHeader), sizeof(infoHeader));
+
+    // Basic validation
+    if (fileHeader.bfType != 0x4D42) { // 'BM'
+        std::cerr << "Error: Not a BMP file." << std::endl;
+        inFile.close();
+        return pixels;
+    }
+    if (infoHeader.biBitCount != 24 || infoHeader.biCompression != 0) {
+        std::cerr << "Error: Only uncompressed 24-bit BMPs are supported." << std::endl;
+        inFile.close();
+        return pixels;
+    }
+
+    int width = infoHeader.biWidth;
+    int height = abs(infoHeader.biHeight); // Use abs in case biHeight is negative (top-down BMP)
+
+    pixels.resize(height, std::vector<COLORREF>(width));
+
+    int rowPadding = (4 - (width * 3) % 4) % 4;
+
+    inFile.seekg(fileHeader.bfOffBits, std::ios::beg); // Move to the pixel data
+
+    // Read pixels bottom-up from BMP and store them top-down in the vector
+    for (int y = height - 1; y >= 0; --y) { // Iterate from bottom row of BMP
+        for (int x = 0; x < width; ++x) {
+            unsigned char b, g, r;
+            inFile.read(reinterpret_cast<char*>(&b), 1);
+            inFile.read(reinterpret_cast<char*>(&g), 1);
+            inFile.read(reinterpret_cast<char*>(&r), 1);
+            pixels[y][x] = RGB(r, g, b); // Store in the correct top-down row
+        }
+        // Skip padding bytes
+        inFile.seekg(rowPadding, std::ios::cur);
+    }
+
+    inFile.close();
+    return pixels;
 }

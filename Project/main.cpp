@@ -58,7 +58,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,saveButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,saveButtonId,loadButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -248,10 +248,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("Save"),
             WS_CHILD | WS_VISIBLE,
-            260, 40, 
+            465, 40, 
             100, 30,
             hwnd,
             (HMENU)saveButtonId, 
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
+        CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Load"),
+            WS_CHILD | WS_VISIBLE,
+            465, 5,
+            100, 30,
+            hwnd,
+            (HMENU)loadButtonId, // Use the new ID
             ((LPCREATESTRUCT)lp)->hInstance,
             NULL
         );
@@ -439,6 +450,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             std::vector<std::vector<COLORREF>> capturedPixels = GetPixels(hwnd, capture_width, capture_height, topBar.bottom);
             saveAsBMP(capturedPixels, "savedBoard.bmp");
             MessageBox(hwnd, TEXT("Image saved as savedBoard.bmp!"), TEXT("Save Successful"), MB_OK | MB_ICONINFORMATION);
+        }
+        else if (LOWORD(wp) == loadButtonId && HIWORD(wp) == BN_CLICKED) {
+            std::vector<std::vector<COLORREF>> loadedPixels = loadBMP("savedBoard.bmp"); 
+            if (!loadedPixels.empty()) {
+                HDC hdc = GetDC(hwnd); // 
+                if (hdc) {
+                    // Clear the drawing area first (optional, but good practice)
+                    RECT clientRect;
+                    GetClientRect(hwnd, &clientRect);
+                    // Adjust the rectangle to only clear the drawing area, not the top bar
+                    clientRect.top = topBar.bottom;
+                    HBRUSH bgBrush = CreateSolidBrush(backgroundColor);
+                    FillRect(hdc, &clientRect, bgBrush);
+                    DeleteObject(bgBrush);
+
+                    // Draw the loaded pixels onto the screen
+                    int imgHeight = loadedPixels.size();
+                    int imgWidth = (imgHeight > 0) ? loadedPixels[0].size() : 0;
+
+                    for (int y = 0; y < imgHeight; ++y) {
+                        for (int x = 0; x < imgWidth; ++x) {
+                            // Ensure pixels are drawn within the visible drawing area
+                            if ((x + 0) < windowWidth && (y + topBar.bottom) < windowHight) {
+                                SetPixel(hdc, x, y + topBar.bottom, loadedPixels[y][x]);
+                            }
+                        }
+                    }
+                    ReleaseDC(hwnd, hdc);
+                    MessageBox(hwnd, TEXT("Image loaded from savedBoard.bmp!"), TEXT("Load Successful"), MB_OK | MB_ICONINFORMATION);
+                } else {
+                    MessageBox(hwnd, TEXT("Failed to get device context for drawing."), TEXT("Load Error"), MB_OK | MB_ICONERROR);
+                }
+            } else {
+                MessageBox(hwnd, TEXT("Failed to load image or image is empty."), TEXT("Load Error"), MB_OK | MB_ICONERROR);
+            }
         }
         //   event     == select item event
         if (HIWORD(wp) == CBN_SELCHANGE) { 
