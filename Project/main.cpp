@@ -4,6 +4,7 @@
 #include "Algorithms/Utility.cpp"
 #include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/CircleAlgorithms.cpp"
+#include "Algorithms/Ellipse.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
 #include "Algorithms/Clipping/CircleClipping.cpp"
@@ -24,6 +25,7 @@ HWND hEraseButton;
 HWND hClearButton;
 HWND hDrawLineButton;
 HWND hDrawCircle;
+HWND hDrawEllipse;
 HWND hFill;
 HWND hClip;
 HWND hCombo;
@@ -34,7 +36,7 @@ bool isWrite = false;
 bool isErase = false;
 
 
-enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,Fill,Clip};
+enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -42,6 +44,9 @@ int currentLineAlgorithm = DirectLineAlgorithm;
 
 enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
 int currentCircleAlgorithm = DirectCircleAlgorithm;
+
+enum EllipseAlgorithm {DirectEllipseAlgorithm,PolarEllipseAlgorithm,MidpointEllipseAlgorithm};
+int currentEllipseAlgorithm = DirectEllipseAlgorithm;
 
 enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgorithms,ConvexFillAlgorithms,NonConvexFillAlgorithms};
 int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
@@ -52,7 +57,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,drawEllipseButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -108,7 +113,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0;
+    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0,a,b;
     static int  windowWidth,windowHight;
 	switch (m)
 	{
@@ -182,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         );
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
-            TEXT("draw line"),
+            TEXT("Draw Line"),
             WS_CHILD | WS_VISIBLE,
             50,5,
             100,30,
@@ -193,12 +198,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         );
         hDrawCircle = CreateWindow(
             TEXT("BUTTON"),
-            TEXT("draw circle"),
+            TEXT("Draw Circle"),
             WS_CHILD | WS_VISIBLE,
             50,40,
             100,30,
             hwnd,
             (HMENU)drawCircleButtonId,
+            nullptr,
+            nullptr
+        );
+        hDrawEllipse = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Draw Ellipse"),
+            WS_CHILD | WS_VISIBLE,
+            50,73,
+            100,20,
+            hwnd,
+            (HMENU)drawEllipseButtonId,
             nullptr,
             nullptr
         );
@@ -332,6 +348,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
+        else if (LOWORD(wp) == drawEllipseButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = DrawEllipse;
+            count = 0;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_SHOW);
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+            
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Midpoint");
+            
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
             ShowWindow(hClipWindow, SW_HIDE);
@@ -396,6 +428,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                         currentLineAlgorithm = index;
                     }else if(currentAction == DrawCircle){
                         currentCircleAlgorithm = index;
+                    } else if(currentAction == DrawEllipse) {
+                        currentEllipseAlgorithm = index;
                     }
                     else if(currentAction == Fill){
                         currentFillAlgorithm = index;
@@ -554,7 +588,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     // }
                     ReleaseDC(hwnd, hdc);
             }
-        }else if(currentAction == DrawCircle){
+        }
+        else if(currentAction == DrawCircle){
             if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -599,7 +634,46 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 ReleaseDC(hwnd, hdc);
             }
-        }else if( currentAction == Fill){
+        } else if(currentAction == DrawEllipse){
+            if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+            }else{
+                x2 = x;
+                y2 = y;
+
+                a = abs(x2-x1);
+                b = abs(y2-y1);
+
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x2,y2,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count = 0;
+		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
+                hdc = GetDC(hwnd);
+
+                if (currentEllipseAlgorithm == DirectEllipseAlgorithm)
+                {
+                    // DirectEllipse(hdc,x1,y1,r,shapeColor);
+                }
+                else if (currentEllipseAlgorithm == PolarEllipseAlgorithm)
+                {
+                    EllipsePolar(hdc, x1, y1, a, b, shapeColor);
+                    
+                }
+                else if (currentEllipseAlgorithm == MidpointEllipseAlgorithm)
+                {
+                    // MidpointEllipse(hdc,x1,y1,r,shapeColor);
+                }
+                
+                ReleaseDC(hwnd, hdc);
+            }
+        }
+        else if( currentAction == Fill){
             hdc = GetDC(hwnd);
             if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
             {
