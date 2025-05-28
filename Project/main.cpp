@@ -658,7 +658,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 
                 if (currentEllipseAlgorithm == DirectEllipseAlgorithm)
                 {
-                    // DirectEllipse(hdc,x1,y1,r,shapeColor);
+
                 }
                 else if (currentEllipseAlgorithm == PolarEllipseAlgorithm)
                 {
@@ -667,7 +667,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentEllipseAlgorithm == MidpointEllipseAlgorithm)
                 {
-                    // MidpointEllipse(hdc,x1,y1,r,shapeColor);
+                    
                 }
                 
                 ReleaseDC(hwnd, hdc);
