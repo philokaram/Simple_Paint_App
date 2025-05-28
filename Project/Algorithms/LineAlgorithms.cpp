@@ -102,7 +102,7 @@ void BresenhamsEfficientDDA(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
                 SetPixel(hdc, x, y, c);
             }
 
-        } else if (x2 < x1 && y2 < y1) {
+        } else if (x2 <= x1 && y2 <= y1) {
             while(x > x2) {
                 if(d1 > 0) {
                     x--;

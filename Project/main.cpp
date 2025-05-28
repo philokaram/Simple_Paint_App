@@ -13,6 +13,7 @@
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
 #include "Algorithms/line/ParametricLine.cpp"
+#include <vector>
 
 int min(int e1,int e2){
     if(e1 < e2)
@@ -113,7 +114,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0,a,b;
+    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0,a,b,polygon_points_count, xl, xr, yb, yt;
+    static std::vector<Point> p = {0, 0, 0, 0, 0};
     static int  windowWidth,windowHight;
 	switch (m)
 	{
@@ -736,23 +738,76 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             if(count == 0){
                 xc1 = x;
                 yc1 = y;
-                count ++;
-            }else{
-                xc2 = x;
-                yc2 = y;
-                count = 0;
-                hdc = GetDC(hwnd);
-                if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
-                    DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
-                    DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
-                    DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
-                    DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
-                }else if(currentClipWindowShape == CircleWindow){
-                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
-                    ModifiedMidpointCircle2(hdc,xc1,yc1,r,shapeColor);
+
+                polygon_points_count = 0;
+                
+            }else if(count >= 1){
+                
+                if(count == 1) {
+                    xc2 = x;
+                    yc2 = y;
+                    hdc = GetDC(hwnd);
+                    if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
+                        DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
+                        DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
+                        DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
+                        DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
+                        
+                    } else if(currentClipWindowShape == CircleWindow){
+                        int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                        ModifiedMidpointCircle2(hdc,xc1,yc1,r,shapeColor);
+                    }
+                    ReleaseDC(hwnd,hdc);
+
                 }
+                
+                // count = 0;
+                hdc = GetDC(hwnd);
+                if(count > 1) {
+                    p[polygon_points_count] = Point(x, y);
+                    polygon_points_count++;
+
+                    if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
+
+                        if(polygon_points_count == 5) {
+                            if(currentClipAlgorithm == PolygonClipping) {
+                                std::cout << "polygon clipping" << std::endl;
+                                // std::cout << p[0].x << " " << p[1].x << " " << p[2].x << " " << p[3].x << " " << p[4].x << " " << std::endl;
+                                // std::cout << p[0].y << " " << p[1].y << " " << p[2].y << " " << p[3].y << " " << p[4].y << " " << std::endl;
+
+                                // p[0] = Point(140, 110);
+                                // p[1] = Point(230, 200);
+                                // p[2] = Point(230, 230);
+                                // p[3] = Point(170, 200);
+                                // p[4] = Point(130, 170);
+                                
+                                // std::cout << xc1 << " " << yc1 << std::endl;
+                                // std::cout << xc2 << " " << yc2 << std::endl;
+                                
+                                xl = xc1;
+                                xr = xc2;
+                                yb = yc1;
+                                yt = yc2;
+
+                                std::vector<Point> resultPoly = polygonClip(p, xl, xr, yb, yt);
+
+                                for (int i = 0; i <= resultPoly.size(); i++) {
+                                    BresenhamsEfficientDDA(hdc, resultPoly[i%resultPoly.size()].x, resultPoly[i%resultPoly.size()].y,
+                                                                resultPoly[(i+1)%resultPoly.size()].x, resultPoly[(i+1)%resultPoly.size()].y, shapeColor);
+                                }
+                            }
+
+                        }
+                        
+                        
+                    }else if(currentClipWindowShape == CircleWindow){
+                        
+                    }
+                }
+
                 ReleaseDC(hwnd,hdc);
             }
+            count ++;
         }
 		break;
     }
