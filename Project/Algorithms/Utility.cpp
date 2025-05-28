@@ -37,3 +37,12 @@ Point operator+(Point p1, Point p2){
 Point operator-(Point p1, Point p2){
     return Point(p1.x - p2.x, p1.y - p2.y);
 }
+
+
+
+union OutCode
+{
+    struct {unsigned left:1,right:1,top:1,bottom:1;};
+    unsigned all:4;
+};
+

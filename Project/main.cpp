@@ -6,6 +6,7 @@
 #include "Algorithms/CircleAlgorithms.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
+#include "Algorithms/Clipping/RectangleClipping.cpp"
 #include "Algorithms/line/DDA.cpp"
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
@@ -20,12 +21,14 @@ HWND hStaticLabel;
 HWND hDrawLineButton;
 HWND hDrawCircle;
 HWND hFill;
+HWND hClip;
 HWND hCombo;
+HWND hClipWindow;
 HBRUSH hBlackBrush;
 
 
 
-enum Action {None,DrawLine,DrawCircle,Fill};
+enum Action {None,DrawLine,DrawCircle,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -37,7 +40,13 @@ int currentCircleAlgorithm = DirectCircleAlgorithm;
 enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgorithms,ConvexFillAlgorithms,NonConvexFillAlgorithms};
 int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
 
-enum buttonsID {drawLineButtonId=1,drawCircleButtonId,fillButtonId};
+enum clippingAlgorithms {NoClipping = -1,PointClipping,LineClipping,PolygonClipping};
+int currentClipAlgorithm = NoClipping;
+
+enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
+int currentClipWindowShape = RectangleWindow;
+
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -93,7 +102,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,x3,y3,count = 0;
+    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0;
     static int  windowWidth,windowHight;
 	switch (m)
 	{
@@ -105,21 +114,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("COMBOBOX"),           // Class name
             NULL,                 // No window title
             CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_VISIBLE,
-            260, 40, 200, 300,    // x, y, width, height
+            260, 10, 200, 300,    // x, y, width, height
             hwnd,                 // Parent window handle
-            (HMENU)0,             // Control ID
+            (HMENU)comboListId,             // Control ID
             ((LPCREATESTRUCT)lp)->hInstance,
             NULL
         );
-
-        // Add items to combo box
-        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 1");
-        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 2");
-        // SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Option 3");
-
         // Optionally, set default selected item
+
         SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        ShowWindow(hCombo, SW_HIDE);
         
+        hClipWindow = CreateWindowEx(
+            0,                    // Extended style
+            TEXT("COMBOBOX"),           // Class name
+            NULL,                 // No window title
+            CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD ,
+            260, 40, 200, 300,    // x, y, width, height
+            hwnd,                 // Parent window handle
+            (HMENU)comboClipWindowId,             // Control ID
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
+        // Add items to combo box
+        SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Rectangle");
+        SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Square");
+        SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Circle");
+
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("draw line"),
@@ -146,10 +167,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("BUTTON"),
             TEXT("Fill"),
             WS_CHILD | WS_VISIBLE,
-            50,75,
+            155,5,
             100,30,
             hwnd,
             (HMENU)fillButtonId,
+            nullptr,
+            nullptr
+        );
+
+        hFill = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Clip"),
+            WS_CHILD | WS_VISIBLE,
+            155,40,
+            100,30,
+            hwnd,
+            (HMENU)clipButtonId,
             nullptr,
             nullptr
         );
@@ -225,9 +258,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if (LOWORD(wp) == drawLineButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = DrawLine;
             count = 0;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_SHOW);
+            
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
-
+            
             // Add new items dynamically
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"DDA");
@@ -241,9 +277,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         else if (LOWORD(wp) == drawCircleButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = DrawCircle;
             count = 0;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_SHOW);
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
-
+            
             // Add new items dynamically
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
@@ -251,12 +289,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Midpoint");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Modified Midpoint 1");
             SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Modified Midpoint 2");
-
+            
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_SHOW);
             // Clear existing items
             SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
             
@@ -269,20 +309,45 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
-        
-        if (HIWORD(wp) == CBN_SELCHANGE) {
+        else if (LOWORD(wp) == clipButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Clip ;
+            ShowWindow(hCombo, SW_SHOW);
+            ShowWindow(hClipWindow, SW_SHOW);
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+            
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Point Clipping");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Line Clipping");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Polygon Clipping");
+            
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+            SendMessage(hClipWindow, CB_SETCURSEL, 0, 0);
+        }
+        //   event     == select item event
+        if (HIWORD(wp) == CBN_SELCHANGE) { 
+            int controlID = LOWORD(wp);  // Which control sent the message?
             HWND hCombo = (HWND)lp;
             int index = SendMessage(hCombo, CB_GETCURSEL, 0, 0);
-            if (index != CB_ERR) {
-                count = 0;
-                if(currentAction == DrawLine){
-                    currentLineAlgorithm = index;
-                }else if(currentAction == DrawCircle){
-                    currentCircleAlgorithm = index;
+            count = 0;
+            if(controlID == comboListId){
+                if (index != CB_ERR) {
+                    if(currentAction == DrawLine){
+                        currentLineAlgorithm = index;
+                    }else if(currentAction == DrawCircle){
+                        currentCircleAlgorithm = index;
+                    }
+                    else if(currentAction == Fill){
+                        currentFillAlgorithm = index;
+                    }
+                    else if(currentAction == Clip){
+                        currentClipAlgorithm = index;
+                        
+                    }
                 }
-                else if(currentAction == Fill){
-                    currentFillAlgorithm = index;
-                }
+            }else if (controlID == comboClipWindowId){
+                currentClipWindowShape = index;
             }
         }
     }
@@ -360,6 +425,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,shapeColor);
+                if(currentClipAlgorithm == LineClipping){
+                    Point p1(x1,y1);
+                    Point p2(x2,y2);
+                    if(LineRectangleClipping(p1,p2,xc1,xc2,yc1,yc2)){
+                        break;
+                    }
+                    x1 = p1.x;
+                    y1 = p1.y;
+                    x2 = p2.x;
+                    y2 = p2.y;
+                }
                 if(currentLineAlgorithm == DirectLineAlgorithm){
                     DirectLine(hdc,x1,y1, x2, y2,shapeColor);
                 }else if ( currentLineAlgorithm == DDALineAlgorithm){
@@ -477,6 +553,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }
             ReleaseDC(hwnd, hdc);
             
+        }
+        else if (currentAction == Clip){
+            if(count == 0){
+                xc1 = x;
+                yc1 = y;
+                count ++;
+            }else{
+                xc2 = x;
+                yc2 = y;
+                count = 0;
+                if(currentClipWindowShape == RectangleWindow){
+                    hdc = GetDC(hwnd);
+                    DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
+                    DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
+                    DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
+                    DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
+                    ReleaseDC(hwnd,hdc);
+                }
+            }
         }
 		break;
     }
