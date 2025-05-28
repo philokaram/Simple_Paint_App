@@ -51,7 +51,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,saveButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -213,6 +213,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             nullptr,
             nullptr
         );
+
+        CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Save"),
+            WS_CHILD | WS_VISIBLE,
+            260, 40, 
+            100, 30,
+            hwnd,
+            (HMENU)saveButtonId, 
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
 		break;
 
     case WM_PAINT: {
@@ -361,6 +373,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             currentAction = Erase ;
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
+        }
+        else if (LOWORD(wp) == saveButtonId && HIWORD(wp) == BN_CLICKED) {
+            // Get client dimensions
+            RECT clientRect;
+            GetClientRect(hwnd, &clientRect);
+            int capture_width = clientRect.right;
+            int capture_height = clientRect.bottom;
+            std::vector<std::vector<COLORREF>> capturedPixels = GetPixels(hwnd, capture_width, capture_height, topBar.bottom);
+            saveAsBMP(capturedPixels, "savedBoard.bmp");
+            MessageBox(hwnd, TEXT("Image saved as savedBoard.bmp!"), TEXT("Save Successful"), MB_OK | MB_ICONINFORMATION);
         }
         //   event     == select item event
         if (HIWORD(wp) == CBN_SELCHANGE) { 
