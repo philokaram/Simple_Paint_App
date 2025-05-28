@@ -541,7 +541,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 if(currentLineAlgorithm == DirectLineAlgorithm){
                     DirectLine(hdc,x1,y1, x2, y2,shapeColor);
                 }else if ( currentLineAlgorithm == DDALineAlgorithm){
-                    DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
+                    // DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x1, y1, x2, y2, shapeColor);
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
                     BresenhamLine(hdc,x1,y1, x2, y2,shapeColor);
                 }
