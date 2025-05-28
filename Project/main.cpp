@@ -21,6 +21,7 @@ int min(int e1,int e2){
 HWND hStaticLabel;
 HWND hWriteButton;
 HWND hEraseButton;
+HWND hClearButton;
 HWND hDrawLineButton;
 HWND hDrawCircle;
 HWND hFill;
@@ -33,7 +34,7 @@ bool isWrite = false;
 bool isErase = false;
 
 
-enum Action {None,Write,Erase,DrawLine,DrawCircle,Fill,Clip};
+enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -51,7 +52,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -165,6 +166,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             40,30,
             hwnd,
             (HMENU)eraseButtonId,
+            nullptr,
+            nullptr
+        );
+        hClearButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Clear"),
+            WS_CHILD | WS_VISIBLE,
+            5,73,
+            40,20,
+            hwnd,
+            (HMENU)clearButtonId,
             nullptr,
             nullptr
         );
@@ -362,6 +374,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
         }
+        else if (LOWORD(wp) == clearButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Clear;
+            ShowWindow(hCombo, SW_HIDE);
+            ShowWindow(hClipWindow, SW_HIDE);
+
+            backgroundColor = backgroundColor;
+            InvalidateRect(hwnd, NULL, TRUE);
+            std::cout << "cleared" << std::endl;
+
+        }
         //   event     == select item event
         if (HIWORD(wp) == CBN_SELCHANGE) { 
             int controlID = LOWORD(wp);  // Which control sent the message?
@@ -462,6 +484,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     {
         int x = LOWORD(lp);
         int y = HIWORD(lp);
+        // if(currentAction == Clear){
+        //     backgroundColor = backgroundColor;
+        //     InvalidateRect(hwnd, NULL, TRUE);
+        //     std::cout << "cleared" << std::endl;
+
+        // }
         if(y < topBar.bottom){
             // check background buttons
             for (int i = 0; i < 5; ++i) {
