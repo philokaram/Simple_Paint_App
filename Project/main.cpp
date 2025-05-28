@@ -4,6 +4,7 @@
 #include "Algorithms/Utility.cpp"
 #include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/CircleAlgorithms.cpp"
+#include "Algorithms/Ellipse.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
 #include "Algorithms/Clipping/CircleClipping.cpp"
@@ -12,6 +13,7 @@
 #include "Algorithms/line/Bresenham.cpp"
 #include "Algorithms/line/ImprovedBresenham.cpp"
 #include "Algorithms/line/ParametricLine.cpp"
+#include <vector>
 
 int min(int e1,int e2){
     if(e1 < e2)
@@ -21,8 +23,10 @@ int min(int e1,int e2){
 HWND hStaticLabel;
 HWND hWriteButton;
 HWND hEraseButton;
+HWND hClearButton;
 HWND hDrawLineButton;
 HWND hDrawCircle;
+HWND hDrawEllipse;
 HWND hFill;
 HWND hClip;
 HWND hCombo;
@@ -33,7 +37,7 @@ bool isWrite = false;
 bool isErase = false;
 
 
-enum Action {None,Write,Erase,DrawLine,DrawCircle,Fill,Clip};
+enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -41,6 +45,9 @@ int currentLineAlgorithm = DirectLineAlgorithm;
 
 enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
 int currentCircleAlgorithm = DirectCircleAlgorithm;
+
+enum EllipseAlgorithm {DirectEllipseAlgorithm,PolarEllipseAlgorithm,MidpointEllipseAlgorithm};
+int currentEllipseAlgorithm = DirectEllipseAlgorithm;
 
 enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgorithms,ConvexFillAlgorithms,NonConvexFillAlgorithms};
 int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
@@ -51,7 +58,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,saveButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -107,7 +114,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 {
 	HDC hdc;
     PAINTSTRUCT ps;
-    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,count = 0;
+    static int x1,x2,y1,y2,x3,y3,xc1,yc1,xc2,yc2,r,count = 0,a,b,polygon_points_count, xl, xr, yb, yt;
+    static std::vector<Point> p = {0, 0, 0, 0, 0};
     static int  windowWidth,windowHight;
 	switch (m)
 	{
@@ -168,9 +176,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             nullptr,
             nullptr
         );
+        hClearButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Clear"),
+            WS_CHILD | WS_VISIBLE,
+            5,73,
+            40,20,
+            hwnd,
+            (HMENU)clearButtonId,
+            nullptr,
+            nullptr
+        );
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
-            TEXT("draw line"),
+            TEXT("Draw Line"),
             WS_CHILD | WS_VISIBLE,
             50,5,
             100,30,
@@ -181,12 +200,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         );
         hDrawCircle = CreateWindow(
             TEXT("BUTTON"),
-            TEXT("draw circle"),
+            TEXT("Draw Circle"),
             WS_CHILD | WS_VISIBLE,
             50,40,
             100,30,
             hwnd,
             (HMENU)drawCircleButtonId,
+            nullptr,
+            nullptr
+        );
+        hDrawEllipse = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Draw Ellipse"),
+            WS_CHILD | WS_VISIBLE,
+            50,73,
+            100,20,
+            hwnd,
+            (HMENU)drawEllipseButtonId,
             nullptr,
             nullptr
         );
@@ -332,6 +362,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
+        else if (LOWORD(wp) == drawEllipseButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = DrawEllipse;
+            count = 0;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_SHOW);
+            // Clear existing items
+            SendMessage(hCombo, CB_RESETCONTENT, 0, 0);
+            
+            // Add new items dynamically
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Direct");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"polar");
+            SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)"Midpoint");
+            
+            // Set default selection
+            SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
             ShowWindow(hClipWindow, SW_HIDE);
@@ -374,6 +420,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
         }
+        else if (LOWORD(wp) == clearButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = Clear;
+            ShowWindow(hCombo, SW_HIDE);
+            ShowWindow(hClipWindow, SW_HIDE);
+
+            backgroundColor = backgroundColor;
+            InvalidateRect(hwnd, NULL, TRUE);
+            std::cout << "cleared" << std::endl;
+
+        }
         else if (LOWORD(wp) == saveButtonId && HIWORD(wp) == BN_CLICKED) {
             // Get client dimensions
             RECT clientRect;
@@ -396,6 +452,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                         currentLineAlgorithm = index;
                     }else if(currentAction == DrawCircle){
                         currentCircleAlgorithm = index;
+                    } else if(currentAction == DrawEllipse) {
+                        currentEllipseAlgorithm = index;
                     }
                     else if(currentAction == Fill){
                         currentFillAlgorithm = index;
@@ -455,7 +513,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             int y = HIWORD(lp);
             if(currentClipAlgorithm == PointClipping){
                 if(currentClipWindowShape == CircleWindow){
-                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
                     if(PointCircleClipping(x,y,xc1,yc1,r)){
                         break;
                     }
@@ -484,6 +542,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     {
         int x = LOWORD(lp);
         int y = HIWORD(lp);
+        // if(currentAction == Clear){
+        //     backgroundColor = backgroundColor;
+        //     InvalidateRect(hwnd, NULL, TRUE);
+        //     std::cout << "cleared" << std::endl;
+
+        // }
         if(y < topBar.bottom){
             // check background buttons
             for (int i = 0; i < 5; ++i) {
@@ -521,7 +585,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,shapeColor);
-                if(currentClipAlgorithm == LineClipping){
+                if(currentClipAlgorithm == LineClipping && currentClipWindowShape == RectangleWindow){
                     Point p1(x1,y1);
                     Point p2(x2,y2);
                     if(LineRectangleClipping(p1,p2,xc1,xc2,yc1,yc2)){
@@ -531,11 +595,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     y1 = p1.y;
                     x2 = p2.x;
                     y2 = p2.y;
+
+                } else if(currentClipAlgorithm == LineClipping && currentClipWindowShape == CircleWindow) {
+                    r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                    DrawLineClippedByCircle(hdc, x1, y1, x2, y2, xc1, yc1, r, shapeColor);
+                    std::cout << currentClipAlgorithm << "\n";
+                    std::cout << currentClipWindowShape << "\n";
+                    break;
                 }
+
                 if(currentLineAlgorithm == DirectLineAlgorithm){
                     DirectLine(hdc,x1,y1, x2, y2,shapeColor);
                 }else if ( currentLineAlgorithm == DDALineAlgorithm){
-                    DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
+                    // DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x1, y1, x2, y2, shapeColor);
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
                     BresenhamLine(hdc,x1,y1, x2, y2,shapeColor);
                 }
@@ -547,7 +620,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     // }
                     ReleaseDC(hwnd, hdc);
             }
-        }else if(currentAction == DrawCircle){
+        }
+        else if(currentAction == DrawCircle){
             if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -570,6 +644,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == PolarCircleAlgorithm)
                 {
+                    CirclePolarEff(hdc, x1, y1, r, shapeColor);
                     
                 }
                 else if (currentCircleAlgorithm == IterativePolarCircleAlgorithm)
@@ -591,7 +666,46 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 ReleaseDC(hwnd, hdc);
             }
-        }else if( currentAction == Fill){
+        } else if(currentAction == DrawEllipse){
+            if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+            }else{
+                x2 = x;
+                y2 = y;
+
+                a = abs(x2-x1);
+                b = abs(y2-y1);
+
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x2,y2,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count = 0;
+		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
+                hdc = GetDC(hwnd);
+
+                if (currentEllipseAlgorithm == DirectEllipseAlgorithm)
+                {
+
+                }
+                else if (currentEllipseAlgorithm == PolarEllipseAlgorithm)
+                {
+                    EllipsePolar(hdc, x1, y1, a, b, shapeColor);
+                    
+                }
+                else if (currentEllipseAlgorithm == MidpointEllipseAlgorithm)
+                {
+                    
+                }
+                
+                ReleaseDC(hwnd, hdc);
+            }
+        }
+        else if( currentAction == Fill){
             hdc = GetDC(hwnd);
             if (currentFillAlgorithm == RecursiveFloodFillAlgorithms)
             {
@@ -654,23 +768,76 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             if(count == 0){
                 xc1 = x;
                 yc1 = y;
-                count ++;
-            }else{
-                xc2 = x;
-                yc2 = y;
-                count = 0;
-                hdc = GetDC(hwnd);
-                if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
-                    DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
-                    DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
-                    DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
-                    DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
-                }else if(currentClipWindowShape == CircleWindow){
-                    int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
-                    ModifiedMidpointCircle2(hdc,xc1,yc1,r,shapeColor);
+
+                polygon_points_count = 0;
+                
+            }else if(count >= 1){
+                
+                if(count == 1) {
+                    xc2 = x;
+                    yc2 = y;
+                    hdc = GetDC(hwnd);
+                    if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
+                        DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
+                        DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
+                        DirectLine(hdc,xc2,yc2,xc1,yc2,shapeColor);
+                        DirectLine(hdc,xc2,yc2,xc2,yc1,shapeColor);
+                        
+                    } else if(currentClipWindowShape == CircleWindow){
+                        int r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                        ModifiedMidpointCircle2(hdc,xc1,yc1,r,shapeColor);
+                    }
+                    ReleaseDC(hwnd,hdc);
+
                 }
+                
+                // count = 0;
+                hdc = GetDC(hwnd);
+                if(count > 1) {
+                    p[polygon_points_count] = Point(x, y);
+                    polygon_points_count++;
+
+                    if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
+
+                        if(polygon_points_count == 5) {
+                            if(currentClipAlgorithm == PolygonClipping) {
+                                std::cout << "polygon clipping" << std::endl;
+                                // std::cout << p[0].x << " " << p[1].x << " " << p[2].x << " " << p[3].x << " " << p[4].x << " " << std::endl;
+                                // std::cout << p[0].y << " " << p[1].y << " " << p[2].y << " " << p[3].y << " " << p[4].y << " " << std::endl;
+
+                                // p[0] = Point(140, 110);
+                                // p[1] = Point(230, 200);
+                                // p[2] = Point(230, 230);
+                                // p[3] = Point(170, 200);
+                                // p[4] = Point(130, 170);
+
+                                // std::cout << xc1 << " " << yc1 << std::endl;
+                                // std::cout << xc2 << " " << yc2 << std::endl;
+                                
+                                xl = xc1;
+                                xr = xc2;
+                                yb = yc1;
+                                yt = yc2;
+
+                                std::vector<Point> resultPoly = polygonClip(p, xl, xr, yb, yt);
+
+                                for (int i = 0; i <= resultPoly.size(); i++) {
+                                    BresenhamsEfficientDDA(hdc, resultPoly[i%resultPoly.size()].x, resultPoly[i%resultPoly.size()].y,
+                                                                resultPoly[(i+1)%resultPoly.size()].x, resultPoly[(i+1)%resultPoly.size()].y, shapeColor);
+                                }
+                            }
+
+                        }
+                        
+                        
+                    }else if(currentClipWindowShape == CircleWindow){
+                        
+                    }
+                }
+
                 ReleaseDC(hwnd,hdc);
             }
+            count ++;
         }
 		break;
     }
