@@ -406,7 +406,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == MidpointCircleAlgorithm)
                 {
-                    
+                    MidpointCircle(hdc,x1,y1,r,shapeColor);
                 }
                 else if (currentCircleAlgorithm == ModifiedMidpointCircleAlgorithm1)
                 {

@@ -47,7 +47,16 @@ void DirectCircle(HDC hdc , int xc , int yc ,int r ,COLORREF c){
 
 //Midpoint 
 
-
+void MidpointCircle(HDC hdc, int xc , int yc, int r , COLORREF c){
+    int x = 0, y = r ,d;
+    DrawPoints(hdc,xc,yc,x,y,c);
+    while(x < y){
+        d = pow(x + 1, 2) + pow(y - 0.5, 2) - r * r;
+        if(d > 0) y--;
+        x++;
+        DrawPoints(hdc,xc,yc,x,y,c);
+    }
+}
 
 
 
