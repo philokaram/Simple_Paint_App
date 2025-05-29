@@ -8,6 +8,7 @@
 #include "Algorithms/CardinalSplineCurve.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
+#include "Algorithms/Filling/FillingShapes.cpp"
 #include "Algorithms/Clipping/CircleClipping.cpp"
 #include "Algorithms/Clipping/RectangleClipping.cpp"
 #include <vector>
@@ -26,6 +27,8 @@ HWND hDrawCircle;
 HWND hDrawEllipse;
 HWND hDrawCardinalSplineCurveButton;
 HWND hFill;
+HWND hShapeFillButton;
+HWND hShapeFillList;
 HWND hClip;
 HWND hSave;
 HWND hLoad;
@@ -44,7 +47,7 @@ bool isWrite = false;
 bool isErase = false;
 
 
-enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,DrawCardinalSplineCurve,Fill,Clip};
+enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,DrawCardinalSplineCurve,ShapeFill,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -65,7 +68,10 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,drawCardinalSplineCurveButtonId,saveButtonId,loadButtonId};
+enum shapeFileAlgorithm {CircleFillWithLines,CircleFillWithCircles,SquareFillWithHermiteCurve,RectangleFillWithBezierCurve};
+int currentShapeFillAlgorithm = CircleFillWithLines;
+
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,drawCardinalSplineCurveButtonId,saveButtonId,loadButtonId,shapeFillButtonId,shapeFillListId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -162,7 +168,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Square");
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Circle");
         SendMessage(hClipWindow, CB_SETCURSEL, 0, 0);
-
+        
+        hShapeFillList = CreateWindowEx(
+            0,                    // Extended style
+            TEXT("COMBOBOX"),           // Class name
+            NULL,                 // No window title
+            CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD ,
+            260, 70, 200, 300,    // x, y, width, height
+            hwnd,                 // Parent window handle
+            (HMENU)shapeFillListId,             // Control ID
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
+        // Add items to combo box
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Circle Fill with Lines");
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Circle Fill with Circles");
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Square Fill with Hermite Curve");
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Rectangle Fill With Bezier Curve");
+        SendMessage(hShapeFillList, CB_SETCURSEL, 0, 0);
+        ShowWindow(hShapeFillList, SW_HIDE);
+        
         hWriteButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Wirte"),
@@ -283,6 +308,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             100, 30,
             hwnd,
             (HMENU)loadButtonId, // Use the new ID
+            ((LPCREATESTRUCT)lp)->hInstance,
+            NULL
+        );
+        
+        hShapeFillButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Shape Fill"),
+            WS_CHILD | WS_VISIBLE| BS_ICON,
+            465, 75,
+            100, 30,
+            hwnd,
+            (HMENU)shapeFillButtonId, // Use the new ID
             ((LPCREATESTRUCT)lp)->hInstance,
             NULL
         );
@@ -540,6 +577,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             currentAction = DrawLine;
             count = 0;
             ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hCombo, SW_SHOW);
             
             // Clear existing items
@@ -558,6 +596,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         else if (LOWORD(wp) == drawCircleButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = DrawCircle;
             count = 0;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
             ShowWindow(hCombo, SW_SHOW);
             // Clear existing items
@@ -577,6 +616,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         else if (LOWORD(wp) == drawEllipseButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = DrawEllipse;
             count = 0;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
             ShowWindow(hCombo, SW_SHOW);
             // Clear existing items
@@ -593,11 +633,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         else if (LOWORD(wp) == drawCardinalSplineCurveButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = DrawCardinalSplineCurve;
             count = 0;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
             ShowWindow(hCombo, SW_HIDE);
         }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
             ShowWindow(hCombo, SW_SHOW);
             // Clear existing items
@@ -612,8 +654,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
         }
+        else if (LOWORD(wp) == shapeFillButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = ShapeFill ;
+            ShowWindow(hShapeFillList, SW_SHOW);
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_HIDE);
+        }
         else if (LOWORD(wp) == clipButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Clip ;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hCombo, SW_SHOW);
             ShowWindow(hClipWindow, SW_SHOW);
             // Clear existing items
@@ -630,16 +679,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
         else if (LOWORD(wp) == writeButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Write ;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
         }
         else if (LOWORD(wp) == eraseButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Erase ;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
         }
         else if (LOWORD(wp) == clearButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Clear;
+            ShowWindow(hShapeFillList, SW_HIDE);
             ShowWindow(hCombo, SW_HIDE);
             ShowWindow(hClipWindow, SW_HIDE);
 
@@ -716,8 +768,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                         
                     }
                 }
-            }else if (controlID == comboClipWindowId){
+            }
+            else if (controlID == comboClipWindowId){
                 currentClipWindowShape = index;
+            }
+            else if (controlID == shapeFillListId){
+                currentShapeFillAlgorithm = index;
             }
         }
     }
@@ -1034,6 +1090,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }
             ReleaseDC(hwnd, hdc);
             
+        }
+        else if (currentAction == ShapeFill){
+            if(currentShapeFillAlgorithm == CircleFillWithLines){
+
+            }else if(currentShapeFillAlgorithm == CircleFillWithCircles){
+                if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+                }else if (count == 1){
+                    x2 = x;
+                    y2 = y;
+                    r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
+                    hdc = GetDC(hwnd);
+                    ModifiedMidpointCircle2(hdc,x1,y1,r,shapeColor);
+                    ReleaseDC(hwnd, hdc);
+                    count++;
+                }else{
+                    hdc = GetDC(hwnd);
+                    CircleQuarterFilling(hdc,x1,y1,r,x,y,shapeColor);
+                    ReleaseDC(hwnd, hdc);
+                    count = 0;
+                }
+            }else if(currentShapeFillAlgorithm == SquareFillWithHermiteCurve){
+                
+            }else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurve){
+                
+            }
         }
         else if (currentAction == Clip){
             if(count == 0){
