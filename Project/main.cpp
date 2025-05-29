@@ -50,7 +50,7 @@ bool isErase = false;
 enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,DrawCardinalSplineCurve,ShapeFill,Fill,Clip};
 Action currentAction = None;
 
-enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
+enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm,ParametricLineAlgorithm};
 int currentLineAlgorithm = DirectLineAlgorithm;
 
 enum circleAlgorithm {DirectCircleAlgorithm,PolarCircleAlgorithm,IterativePolarCircleAlgorithm,MidpointCircleAlgorithm,ModifiedMidpointCircleAlgorithm1,ModifiedMidpointCircleAlgorithm2};
@@ -924,8 +924,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
 
                 }
-                // else if(currentLineAlgorithm == parametercLine){
-                // }
+                else if(currentLineAlgorithm == ParametricLineAlgorithm){
+                    ParametricLine(hdc,x1,y1, x2, y2,shapeColor);
+                }
                     ReleaseDC(hwnd, hdc);
             }
         }
