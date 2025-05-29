@@ -1120,7 +1120,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }else if(currentShapeFillAlgorithm == SquareFillWithHermiteCurve){
                 
             }else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurve){
-                
+                if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+                }else{
+                    hdc = GetDC(hwnd);
+                    BresenhamsEfficientDDA(hdc, x1, y1, x, y1, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x, y1, x, y, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x, y, x1, y, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x1, y, x1, y1, shapeColor);
+                    RectangleFillWithBezierCurveFunction(hdc,std::min(x,x1),std::max(x,x1),std::min(y,y1),std::max(y,y1),shapeColor);
+                    ReleaseDC(hwnd, hdc);
+                    count = 0;
+                }
             }
         }
         else if (currentAction == Clip){

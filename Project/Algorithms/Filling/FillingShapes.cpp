@@ -1,3 +1,4 @@
+#include "../temp/BezierCurve.cpp"
 //Filling Circle with lines after taking filling quarter from user
 
 
@@ -62,3 +63,11 @@ void CircleQuarterFilling(HDC hdc,int xc,int yc,int r,int xf,int yf,COLORREF fil
 
 
 // Filling Rectangle with Bezier Curve [horizontal]
+
+void RectangleFillWithBezierCurveFunction(HDC hdc, int xLeft,int xRight,int yTop, int yBottom,COLORREF fillingColor){
+    for (int y = yTop; y <= yBottom; y++)
+    {
+        BezierCurve(hdc,xLeft,y,xLeft,y,xRight,y,xRight,y,fillingColor);
+    }
+    
+}
