@@ -181,7 +181,53 @@ void BresenhamsEfficientDDA(HDC hdc, int x1, int y1, int x2, int y2, COLORREF c)
 
 //Midpoint
 
+void DrawLineBresenham(HDC hdc, int xs, int ys, int xe, int ye, COLORREF c) {
+    int dx = xe - xs;
+    int dy = ye - ys;
 
+    bool steep = abs(dy) > abs(dx);
+
+    // If steep, swap x and y coordinates
+    if (steep) {
+        int temp = xs; xs = ys; ys = temp;
+        temp = xe; xe = ye; ye = temp;
+        dx = xe - xs;
+        dy = ye - ys;
+    }
+    if (dx < 0) {
+        int temp = xs; xs = xe; xe = temp;
+        temp = ys; ys = ye; ye = temp;
+        dx = -dx;
+        dy = -dy;
+    }
+    int x = xs, y = ys;
+    int d = dx - 2 * abs(dy);
+    int d1 = 2 * dx - 2 * abs(dy);
+    int d2 = -2 * abs(dy);
+    int y_step = (dy > 0) ? 1 : -1;
+    if (steep) {
+        SetPixel(hdc, y, x, c);
+    }
+    else {
+        SetPixel(hdc, x, y, c);
+    }
+    while (x < xe) {
+        if (d < 0) {
+            y += y_step;
+            d += d1;
+        }
+        else {
+            d += d2;
+        }
+        x++;
+        if (steep) {
+            SetPixel(hdc, y, x, c);
+        }
+        else {
+            SetPixel(hdc, x, y, c);
+        }
+    }
+}
 
 //parametric
 

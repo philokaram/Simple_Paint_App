@@ -944,6 +944,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 
                 }
                 else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
+                    DrawLineBresenham(hdc, x1, y1, x2, y2, shapeColor);
 
                 }
                 else if(currentLineAlgorithm == ParametricLineAlgorithm){
