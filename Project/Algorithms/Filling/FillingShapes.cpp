@@ -1,6 +1,37 @@
+#include <math.h>
 //Filling Circle with lines after taking filling quarter from user
 
+void CircleQuarterFillWithLines(HDC hdc,int xc,int yc,int r,int xf,int yf,COLORREF c) {
+    int signX = 1;
+    int signY = -1;
+    if(xf > xc && yf < yc){
+        signX = 1;
+        signY = -1;
+    }
+    else if(xf < xc && yf < yc){
+        signX = -1;
+        signY = -1;
+    }
+    else if(xf < xc && yf > yc){
+        signX = -1;
+        signY = 1;
+    }
+    else if(xf > xc && yf > yc){
+        signX = 1;
+        signY = 1;
+    }
 
+    double x = r, y = 0, dtheta = 1.0 / r, tmpx;
+    double cdtheta = cos(dtheta), sdtheta = sin(dtheta);
+    
+    while (x > y) {
+        DirectLine(hdc, xc, yc, xc + signX * round(x), yc + signY * round(y), c);
+        DirectLine(hdc, xc, yc, xc + signX * round(y), yc + signY * round(x), c);
+        tmpx = x;
+        x = tmpx * cdtheta - y * sdtheta;
+        y = y * cdtheta + tmpx * sdtheta;
+    }
+}
 
 
 

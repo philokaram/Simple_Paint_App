@@ -1093,9 +1093,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             
         }
         else if (currentAction == ShapeFill){
-            if(currentShapeFillAlgorithm == CircleFillWithLines){
-
-            }else if(currentShapeFillAlgorithm == CircleFillWithCircles){
+            if(currentShapeFillAlgorithm == CircleFillWithCircles || currentShapeFillAlgorithm == CircleFillWithLines){
                 if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -1113,7 +1111,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     count++;
                 }else{
                     hdc = GetDC(hwnd);
-                    CircleQuarterFilling(hdc,x1,y1,r,x,y,shapeColor);
+                    if (currentShapeFillAlgorithm == CircleFillWithCircles)
+                        CircleQuarterFilling(hdc,x1,y1,r,x,y,shapeColor);
+                    else
+                        CircleQuarterFillWithLines(hdc, x1, y1, r, x, y, shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count = 0;
                 }
