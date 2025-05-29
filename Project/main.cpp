@@ -33,7 +33,14 @@ HWND hSave;
 HWND hLoad;
 HWND hCombo;
 HWND hClipWindow;
+
 HBRUSH hBlackBrush;
+
+HICON hWriteCursor;
+HICON hEraseCursor;
+HICON hFillCursor;
+HICON hClipCursor;
+HICON hDrawCursor;
 
 bool isWrite = false;
 bool isErase = false;
@@ -386,6 +393,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SendMessage(hLoad, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hLoadIcon);
         }
 
+         hWriteCursor = (HICON)LoadImage(
+            nullptr,
+            TEXT("Cursors/write.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+         hEraseCursor = (HICON)LoadImage(
+            nullptr,
+            TEXT("Cursors/erase.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+         hFillCursor = (HICON)LoadImage(
+            nullptr,
+            TEXT("Cursors/fill.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+         hClipCursor = (HICON)LoadImage(
+            nullptr,
+            TEXT("Cursors/clip.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+         hDrawCursor = (HICON)LoadImage(
+            nullptr,
+            TEXT("Cursors/point.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
 		break;
     }
     case WM_PAINT: {
@@ -433,6 +476,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         TextOutW(hdc, windowWidth-  410, 20,L"Shape Color          ", 17);
         EndPaint(hwnd, &ps);
         return 0;
+    }
+    case WM_SETCURSOR: {
+        POINT pt;
+        GetCursorPos(&pt);           // Get global (screen) coordinates
+        ScreenToClient(hwnd, &pt);   // Convert to client area
+        int y = pt.y;
+        if(y > 0 && y < topBar.bottom){
+            SetCursor(LoadCursor(NULL, IDC_HAND)); 
+        }else if (y > topBar.bottom)
+        {
+            if (currentAction == Write) {
+                SetCursor(hWriteCursor);
+            } else if (currentAction == Erase) {
+                SetCursor(hEraseCursor);
+            }else if (currentAction == Fill) {
+                SetCursor(hFillCursor);
+            }else if (currentAction == Clip) {
+                SetCursor(hClipCursor);
+            }else if (currentAction == DrawLine || currentAction == DrawCircle|| currentAction == DrawEllipse) {
+                SetCursor(hDrawCursor);
+            } else {
+                SetCursor(LoadCursor(NULL, IDC_ARROW)); // Default cursor
+            }
+        }else {
+            SetCursor(LoadCursor(NULL, IDC_ARROW)); // Default cursor
+        }
+        return TRUE;
+        break;
     }
 
     case WM_CTLCOLORSTATIC:
