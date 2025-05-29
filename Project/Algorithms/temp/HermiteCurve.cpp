@@ -26,5 +26,19 @@
     |_  _|   |_              _| |_  _|
 */
 void HermiteCurve(HDC hdc, int x1 , int y1 , int x2 , int y2,int u1 , int v1 ,int u2, int v2,COLORREF c){
+    int  a1 = 2  * x1 +     u1 - 2 * x2 + u2,
+    b1 = -3 * x1 - 2 * u1 + 3 * x2 - u2,
+    a2 = 2  * y1 +     v1 - 2 * y2 + v2,
+    b2 = -3 * y1 - 2 * v1 + 3 * y2 - v2;
+    double step = 1.0/1000.0;
+    for (double t = 0; t <= 1; t+=step)
+    {
+        double x = a1 *(t*t*t) + b1 *(t*t) +u1*t+ x1;
+        double y = a2 *(t*t*t) + b2 *(t*t) +v1*t+ y1;
+        // std::cout<<"\nx: "<<Round(x)<<" y: "<<Round(y);
+        // std::cout<<"\nc: "<<c;
+        SetPixel(hdc,Round(x),Round(y),c);
+    }
+    
 
 }

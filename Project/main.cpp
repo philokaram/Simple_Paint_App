@@ -5,6 +5,7 @@
 #include "Algorithms/LineAlgorithms.cpp"
 #include "Algorithms/CircleAlgorithms.cpp"
 #include "Algorithms/Ellipse.cpp"
+#include "Algorithms/CardinalSplineCurve.cpp"
 #include "Algorithms/Filling/FloodFill.cpp"
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
 #include "Algorithms/Clipping/CircleClipping.cpp"
@@ -23,6 +24,7 @@ HWND hClearButton;
 HWND hDrawLineButton;
 HWND hDrawCircle;
 HWND hDrawEllipse;
+HWND hDrawCardinalSplineCurveButton;
 HWND hFill;
 HWND hClip;
 HWND hSave;
@@ -42,7 +44,7 @@ bool isWrite = false;
 bool isErase = false;
 
 
-enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,Fill,Clip};
+enum Action {None,Write,Erase,Clear,DrawLine,DrawCircle,DrawEllipse,DrawCardinalSplineCurve,Fill,Clip};
 Action currentAction = None;
 
 enum lineAlgorithm {DirectLineAlgorithm,DDALineAlgorithm,MidpointLineAlgorithm,ModifiedMidpointLineAlgorithm};
@@ -63,7 +65,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,saveButtonId,loadButtonId};
+enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,drawCardinalSplineCurveButtonId,saveButtonId,loadButtonId};
 //1. change Background
 COLORREF backgroundColor = RGB(255, 255, 255); 
 
@@ -224,6 +226,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             100,20,
             hwnd,
             (HMENU)drawEllipseButtonId,
+            nullptr,
+            nullptr
+        );
+        hDrawCardinalSplineCurveButton = CreateWindow(
+            TEXT("BUTTON"),
+            TEXT("Draw Cardinal Spline Curve"),
+            WS_CHILD | WS_VISIBLE| BS_ICON,
+            155,73,
+            100,20,
+            hwnd,
+            (HMENU)drawCardinalSplineCurveButtonId,
             nullptr,
             nullptr
         );
@@ -576,6 +589,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             
             // Set default selection
             SendMessage(hCombo, CB_SETCURSEL, 0, 0);
+        }
+        else if (LOWORD(wp) == drawCardinalSplineCurveButtonId && HIWORD(wp) == BN_CLICKED) {
+            currentAction = DrawCardinalSplineCurve;
+            count = 0;
+            ShowWindow(hClipWindow, SW_HIDE);
+            ShowWindow(hCombo, SW_HIDE);
         }
         else if (LOWORD(wp) == fillButtonId && HIWORD(wp) == BN_CLICKED) {
             currentAction = Fill ;
@@ -936,6 +955,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 
                 ReleaseDC(hwnd, hdc);
+            }
+        }
+        else if(currentAction == DrawCardinalSplineCurve){
+            if(count < 4){
+                if(count == 0){
+                    p.resize(0);
+                }
+                p.push_back(Point(x,y));
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x,y,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+            }
+            
+            if(count == 4){
+                hdc = GetDC(hwnd);
+                CardinalSplineCurve(hdc,p,4,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count = 0;
             }
         }
         else if( currentAction == Fill){
