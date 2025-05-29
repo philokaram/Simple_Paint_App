@@ -9,10 +9,6 @@
 #include "Algorithms/Filling/ConvexAndNonConvex.cpp"
 #include "Algorithms/Clipping/CircleClipping.cpp"
 #include "Algorithms/Clipping/RectangleClipping.cpp"
-#include "Algorithms/line/DDA.cpp"
-#include "Algorithms/line/Bresenham.cpp"
-#include "Algorithms/line/ImprovedBresenham.cpp"
-#include "Algorithms/line/ParametricLine.cpp"
 #include <vector>
 
 int min(int e1,int e2){
@@ -848,14 +844,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     // DrawLineDDA(hdc,x1,y1, x2, y2, shapeColor);
                     BresenhamsEfficientDDA(hdc, x1, y1, x2, y2, shapeColor);
                 }else if(currentLineAlgorithm == MidpointLineAlgorithm){
-                    BresenhamLine(hdc,x1,y1, x2, y2,shapeColor);
+
                 }
                 else if(currentLineAlgorithm == ModifiedMidpointLineAlgorithm){
-                    ImprovedBresenhamLine(hdc,x1,y1, x2, y2, shapeColor);
+
                 }
                 // else if(currentLineAlgorithm == parametercLine){
-                    //     ParametrecLine(hdc,x1,y1, x2, y2, shapeColor);
-                    // }
+                // }
                     ReleaseDC(hwnd, hdc);
             }
         }
