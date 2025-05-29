@@ -153,6 +153,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Rectangle");
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Square");
         SendMessage(hClipWindow, CB_ADDSTRING, 0, (LPARAM)"Circle");
+        SendMessage(hClipWindow, CB_SETCURSEL, 0, 0);
 
         hWriteButton = CreateWindow(
             TEXT("BUTTON"),
@@ -731,12 +732,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 SetPixel(hdc,x2,y2,shapeColor);
                 ReleaseDC(hwnd, hdc);
                 count = 0;
-		        int r = sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
                 hdc = GetDC(hwnd);
 
                 if (currentEllipseAlgorithm == DirectEllipseAlgorithm)
                 {
 
+                    DirectEllipse(hdc, x1, y1, a, b, shapeColor);
                 }
                 else if (currentEllipseAlgorithm == PolarEllipseAlgorithm)
                 {
