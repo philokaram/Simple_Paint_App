@@ -438,6 +438,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         if (hLoadIcon) {
             SendMessage(hLoad, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hLoadIcon);
         }
+        HICON hCardinalSplineIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/curve.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hCardinalSplineIcon) {
+            SendMessage(hDrawCardinalSplineCurveButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hCardinalSplineIcon);
+        }
+        HICON hShapeFillIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/shapeFill.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hShapeFillIcon) {
+            SendMessage(hShapeFillButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hShapeFillIcon);
+        }
 
          hWriteCursor = (HICON)LoadImage(
             nullptr,
