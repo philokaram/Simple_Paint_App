@@ -56,7 +56,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             TEXT("BUTTON"),
             TEXT("Click Me"),
             WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_ICON | BS_CENTER,
-            150, 120, 200, 60,
+            150, 120, 30, 30,
             hwnd,
             (HMENU)1,
             hInst,
@@ -76,13 +76,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             SendMessage(hButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
         }
 
-        // Set custom font
-        HFONT hFont = CreateFont(
-            20, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
-            ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
-            DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Segoe UI")
-        );
-        SendMessage(hButton, WM_SETFONT, (WPARAM)hFont, TRUE);
+        // // Set custom font
+        // HFONT hFont = CreateFont(
+        //     20, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+        //     ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+        //     DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Segoe UI")
+        // );
+        // SendMessage(hButton, WM_SETFONT, (WPARAM)hFont, TRUE);
         break;
     }
     case WM_COMMAND:

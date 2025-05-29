@@ -29,6 +29,8 @@ HWND hDrawCircle;
 HWND hDrawEllipse;
 HWND hFill;
 HWND hClip;
+HWND hSave;
+HWND hLoad;
 HWND hCombo;
 HWND hClipWindow;
 HBRUSH hBlackBrush;
@@ -121,6 +123,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
 	{
 
     case WM_CREATE:
+    {
         // Create a combo box (drop-down list)
         hCombo = CreateWindowEx(
             0,                    // Extended style
@@ -158,7 +161,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hWriteButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Wirte"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE | BS_ICON| BS_FLAT,
             5,5,
             40,30,
             hwnd,
@@ -169,7 +172,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hEraseButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Erase"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             5,40,
             40,30,
             hwnd,
@@ -180,7 +183,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hClearButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Clear"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             5,73,
             40,20,
             hwnd,
@@ -191,7 +194,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hDrawLineButton = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Draw Line"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             50,5,
             100,30,
             hwnd,
@@ -202,7 +205,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hDrawCircle = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Draw Circle"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             50,40,
             100,30,
             hwnd,
@@ -213,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hDrawEllipse = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Draw Ellipse"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             50,73,
             100,20,
             hwnd,
@@ -224,7 +227,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         hFill = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Fill"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             155,5,
             100,30,
             hwnd,
@@ -233,10 +236,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             nullptr
         );
 
-        hFill = CreateWindow(
+        hClip = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Clip"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             155,40,
             100,30,
             hwnd,
@@ -245,10 +248,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             nullptr
         );
 
-        CreateWindow(
+        hSave = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Save"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             465, 40, 
             100, 30,
             hwnd,
@@ -256,10 +259,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             ((LPCREATESTRUCT)lp)->hInstance,
             NULL
         );
-        CreateWindow(
+        hLoad = CreateWindow(
             TEXT("BUTTON"),
             TEXT("Load"),
-            WS_CHILD | WS_VISIBLE,
+            WS_CHILD | WS_VISIBLE| BS_ICON,
             465, 5,
             100, 30,
             hwnd,
@@ -267,8 +270,124 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             ((LPCREATESTRUCT)lp)->hInstance,
             NULL
         );
-		break;
 
+        //icons 
+         // Load icon from file 
+        HICON hPencilIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/pencil.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hPencilIcon) {
+            SendMessage(hWriteButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hPencilIcon);
+        }
+       
+        HICON hEraseIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/erase.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hEraseIcon) {
+            SendMessage(hEraseButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hEraseIcon);
+        }
+
+        HICON hClearIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/clear.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hClearIcon) {
+            SendMessage(hClearButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hClearIcon);
+        }
+        HICON hDrawLineIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/line.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hDrawLineIcon) {
+            SendMessage(hDrawLineButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hDrawLineIcon);
+        }
+        HICON hDrawCircleIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/circle.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hDrawCircleIcon) {
+            SendMessage(hDrawCircle, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hDrawCircleIcon);
+        }
+        HICON hDrawEllipseIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/ellipse.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hDrawEllipseIcon) {
+            SendMessage(hDrawEllipse, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hDrawEllipseIcon);
+        }
+        HICON hFillIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/fill.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hFillIcon) {
+            SendMessage(hFill, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hFillIcon);
+        }
+        HICON hclipIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/clip.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hclipIcon) {
+            SendMessage(hClip, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hclipIcon);
+        }
+        HICON hSaveIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/save.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hSaveIcon) {
+            SendMessage(hSave, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hSaveIcon);
+        }
+        HICON hLoadIcon = (HICON)LoadImage(
+            nullptr,
+            TEXT("Icons/load.ico"),  // <- Change this to a real icon path
+            IMAGE_ICON,
+            20, 20,
+            LR_LOADFROMFILE
+        );
+
+        if (hLoadIcon) {
+            SendMessage(hLoad, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hLoadIcon);
+        }
+
+		break;
+    }
     case WM_PAINT: {
         //change background//
         hdc = BeginPaint(hwnd, &ps);
@@ -332,6 +451,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             SetTextColor(hdcStatic, RGB(255, 255, 255)); // text color
             return (INT_PTR)hBlackBrush;
         }
+        
     }
     case WM_COMMAND:
     {
