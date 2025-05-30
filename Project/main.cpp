@@ -848,7 +848,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     if(PointCircleClipping(x,y,xc1,yc1,r)){
                         break;
                     }
-                } else if (currentClipWindowShape == RectangleWindow) {
+                } else if (currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow) {
                     if (PointRectangleClipping(x, y, xc1, xc2, yc1, yc2))
                         break;
                 }
@@ -919,7 +919,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 count = 0;
                 hdc = GetDC(hwnd);
                 SetPixel(hdc,x2,y2,shapeColor);
-                if(currentClipAlgorithm == LineClipping && currentClipWindowShape == RectangleWindow){
+                if(currentClipAlgorithm == LineClipping && (currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow)){
                     Point p1(x1,y1);
                     Point p2(x2,y2);
                     if(LineRectangleClipping(p1,p2,xc1,xc2,yc1,yc2)){
@@ -1179,6 +1179,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     xc2 = x;
                     yc2 = y;
                     hdc = GetDC(hwnd);
+                    if (currentClipWindowShape == SquareWindow) {
+                        SetPixel(hdc, xc1, yc1, shapeColor);
+                        int side = 2 * sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
+                        yc2 = yc1 + side / 2;
+                        xc2 = xc1 + side / 2;
+                        xc1 -= side / 2;
+                        yc1 -= side / 2;
+                    }
                     if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
                         DirectLine(hdc,xc1,yc1,xc1,yc2,shapeColor);
                         DirectLine(hdc,xc1,yc1,xc2,yc1,shapeColor);
