@@ -2,7 +2,9 @@
 #include <vector>
 //point 
 
-
+bool PointRectangleClipping(int x, int y, int xLeft , int xRight, int yTop, int yBottom) {
+    return x < xLeft || x > xRight || y < yTop || y > yBottom;
+}
 
 
 //line 

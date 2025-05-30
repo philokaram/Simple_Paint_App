@@ -848,6 +848,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     if(PointCircleClipping(x,y,xc1,yc1,r)){
                         break;
                     }
+                } else if (currentClipWindowShape == RectangleWindow) {
+                    if (PointRectangleClipping(x, y, xc1, xc2, yc1, yc2))
+                        break;
                 }
             }
             hdc = GetDC(hwnd);
