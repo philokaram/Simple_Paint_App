@@ -68,7 +68,7 @@ int currentClipAlgorithm = PointClipping;
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
 
-enum shapeFileAlgorithm {CircleFillWithLines,CircleFillWithCircles,SquareFillWithHermiteCurve,RectangleFillWithBezierCurve};
+enum shapeFileAlgorithm {CircleFillWithLines,CircleFillWithCircles,SquareFillWithHermiteCurve,RectangleFillWithBezierCurveHorizontal,RectangleFillWithBezierCurveVertical};
 int currentShapeFillAlgorithm = CircleFillWithLines;
 
 enum buttonsID {comboListId,drawLineButtonId,drawCircleButtonId,fillButtonId,clipButtonId,comboClipWindowId,writeButtonId,eraseButtonId,clearButtonId,drawEllipseButtonId,drawCardinalSplineCurveButtonId,saveButtonId,loadButtonId,shapeFillButtonId,shapeFillListId};
@@ -184,7 +184,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Circle Fill with Lines");
         SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Circle Fill with Circles");
         SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Square Fill with Hermite Curve");
-        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Rectangle Fill With Bezier Curve");
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Rectangle Fill With Bezier Curve Horizontal");
+        SendMessage(hShapeFillList, CB_ADDSTRING, 0, (LPARAM)"Rectangle Fill With Bezier Curve Vertical");
         SendMessage(hShapeFillList, CB_SETCURSEL, 0, 0);
         ShowWindow(hShapeFillList, SW_HIDE);
         
@@ -1146,7 +1147,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
             }else if(currentShapeFillAlgorithm == SquareFillWithHermiteCurve){
                 
-            }else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurve){
+            }else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurveHorizontal){
                 if(count == 0){
                 x1 = x;
                 y1 = y;
@@ -1160,7 +1161,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     BresenhamsEfficientDDA(hdc, x, y1, x, y, shapeColor);
                     BresenhamsEfficientDDA(hdc, x, y, x1, y, shapeColor);
                     BresenhamsEfficientDDA(hdc, x1, y, x1, y1, shapeColor);
-                    RectangleFillWithBezierCurveFunction(hdc,std::min(x,x1),std::max(x,x1),std::min(y,y1),std::max(y,y1),shapeColor);
+                    RectangleFillWithBezierCurveFunctionHorizontal(hdc,std::min(x,x1),std::max(x,x1),std::min(y,y1),std::max(y,y1),shapeColor);
+                    ReleaseDC(hwnd, hdc);
+                    count = 0;
+                }
+            }
+            else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurveVertical){
+                if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+                }else{
+                    hdc = GetDC(hwnd);
+                    BresenhamsEfficientDDA(hdc, x1, y1, x, y1, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x, y1, x, y, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x, y, x1, y, shapeColor);
+                    BresenhamsEfficientDDA(hdc, x1, y, x1, y1, shapeColor);
+                    RectangleFillWithBezierCurveFunctionVertical(hdc,std::min(x,x1),std::max(x,x1),std::min(y,y1),std::max(y,y1),shapeColor);
                     ReleaseDC(hwnd, hdc);
                     count = 0;
                 }

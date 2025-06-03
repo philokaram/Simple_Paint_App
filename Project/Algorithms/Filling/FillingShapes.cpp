@@ -96,7 +96,17 @@ void CircleQuarterFilling(HDC hdc,int xc,int yc,int r,int xf,int yf,COLORREF fil
 
 // Filling Rectangle with Bezier Curve [horizontal]
 
-void RectangleFillWithBezierCurveFunction(HDC hdc, int xLeft,int xRight,int yTop, int yBottom,COLORREF fillingColor){
+void RectangleFillWithBezierCurveFunctionHorizontal(HDC hdc, int xLeft,int xRight,int yTop, int yBottom,COLORREF fillingColor){
+    for (int x = xLeft; x <= xRight; x++)
+    {
+        BezierCurve(hdc,x,yBottom,x,yBottom,x,yTop,x,yTop,fillingColor);
+    }
+    
+}
+
+// Filling Rectangle with Bezier Curve [vertical]
+
+void RectangleFillWithBezierCurveFunctionVertical(HDC hdc, int xLeft,int xRight,int yTop, int yBottom,COLORREF fillingColor){
     for (int y = yTop; y <= yBottom; y++)
     {
         BezierCurve(hdc,xLeft,y,xLeft,y,xRight,y,xRight,y,fillingColor);
