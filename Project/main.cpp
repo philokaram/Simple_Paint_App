@@ -1295,7 +1295,7 @@ int APIENTRY WinMain(HINSTANCE hi, HINSTANCE pi, LPSTR cmd, int nsh)
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.hInstance = hi;
 	RegisterClassW(&wc);
-	HWND hwnd = CreateWindowW(L"MyClass", L"Graphics App", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hi, 0);
+	HWND hwnd = CreateWindowW(L"MyClass", L"Graphics App", WS_OVERLAPPEDWINDOW, 100, 100, 1100, 600, NULL, NULL, hi, 0);
 	ShowWindow(hwnd, nsh);
 	UpdateWindow(hwnd);
 	MSG msg;
