@@ -63,7 +63,7 @@ enum fillingAlgorithms {RecursiveFloodFillAlgorithms,NonRecursiveFloodFillAlgori
 int currentFillAlgorithm = RecursiveFloodFillAlgorithms;
 
 enum clippingAlgorithms {PointClipping,LineClipping,PolygonClipping};
-int currentClipAlgorithm = PointClipping;
+int currentClipAlgorithm = -1;
 
 enum clipWindowShape{RectangleWindow,SquareWindow,CircleWindow};
 int currentClipWindowShape = RectangleWindow;
@@ -216,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("Clear"),
             WS_CHILD | WS_VISIBLE| BS_ICON,
             5,73,
-            40,20,
+            40,30,
             hwnd,
             (HMENU)clearButtonId,
             nullptr,
@@ -249,7 +249,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("Draw Ellipse"),
             WS_CHILD | WS_VISIBLE| BS_ICON,
             50,73,
-            100,20,
+            100,30,
             hwnd,
             (HMENU)drawEllipseButtonId,
             nullptr,
@@ -260,7 +260,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             TEXT("Draw Cardinal Spline Curve"),
             WS_CHILD | WS_VISIBLE| BS_ICON,
             155,73,
-            100,20,
+            100,30,
             hwnd,
             (HMENU)drawCardinalSplineCurveButtonId,
             nullptr,
@@ -807,7 +807,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         windowWidth = LOWORD(lp);
         windowHight = HIWORD(lp);
         //size top bar
-        int barHeight = min(windowHight*20/100,105); 
+        int barHeight = min(windowHight*20/100,120); 
         topBar.right = windowWidth;
         topBar.bottom = barHeight;
 
@@ -841,22 +841,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
     }
     case WM_MOUSEMOVE:{
         if(currentAction == Write && isWrite){
-            int x = LOWORD(lp);
-            int y = HIWORD(lp);
+            x2 = LOWORD(lp);
+            y2 = HIWORD(lp);
             if(currentClipAlgorithm == PointClipping){
                 if(currentClipWindowShape == CircleWindow){
                     r = sqrt(pow(xc1 - xc2,2) + pow(yc1 - yc2,2));
-                    if(PointCircleClipping(x,y,xc1,yc1,r)){
+                    if(PointCircleClipping(x2,y2,xc1,yc1,r)){
                         break;
                     }
                 } else if (currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow) {
-                    if (PointRectangleClipping(x, y, xc1, xc2, yc1, yc2))
-                        break;
+                    if (PointRectangleClipping(x2, y2, xc1, xc2, yc1, yc2))
+                    break;
                 }
             }
             hdc = GetDC(hwnd);
-            SetPixel(hdc,x,y,shapeColor);
+            if(x1 != 0){
+                BresenhamsEfficientDDA(hdc, x1, y1, x2, y2, shapeColor);
+            }
             ReleaseDC(hwnd, hdc);
+            x1 = x2;
+            y1 = y2;
         }
         else if(currentAction == Erase && isErase){
             int x = LOWORD(lp);
@@ -901,6 +905,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }
         }
         else if(currentAction == Write){
+            x1 = 0;
+            y1 = 0;
             isWrite = true;
         }
         else if(currentAction == Erase){
