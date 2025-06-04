@@ -1230,6 +1230,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     if(currentClipWindowShape == RectangleWindow || currentClipWindowShape == SquareWindow ){
 
                         if(polygon_points_count == 5) {
+                            polygon_points_count = 0;
                             if(currentClipAlgorithm == PolygonClipping) {
                                 std::cout << "polygon clipping" << std::endl;
                                 // std::cout << p[0].x << " " << p[1].x << " " << p[2].x << " " << p[3].x << " " << p[4].x << " " << std::endl;
