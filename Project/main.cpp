@@ -543,6 +543,43 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         SetBkMode(hdc, TRANSPARENT);
         TextOutW(hdc, windowWidth-  190, 20,L"Background Color ", 17);
         TextOutW(hdc, windowWidth-  410, 20,L"Shape Color          ", 17);
+
+        if (currentAction == Fill && currentFillAlgorithm == ConvexFillAlgorithms) {
+            COLORREF outlineColor = RGB(0, 0, 255);
+            COLORREF fillColor = RGB(0, 255, 0);
+
+            if (g_drawingPolygon)
+            {
+                if (g_polygonVertices.size() > 1)
+                {
+                    for (size_t i = 0; i < g_polygonVertices.size() - 1; ++i)
+                    {
+                        DrawLineBresenham(hdc, g_polygonVertices[i].x, g_polygonVertices[i].y,
+                            g_polygonVertices[i + 1].x, g_polygonVertices[i + 1].y, outlineColor);
+                    }
+                }
+                if (!g_polygonVertices.empty())
+                {
+                    DrawPixel(hdc, g_polygonVertices.back().x, g_polygonVertices.back().y, outlineColor);
+                }
+            }
+            else
+            {
+                if (g_polygonVertices.size() >= 3)
+                {
+                    FillConvexPolygon(hdc, g_polygonVertices, fillColor);
+                    for (size_t i = 0; i < g_polygonVertices.size(); ++i)
+                    {
+                        POINT p1 = g_polygonVertices[i];
+                        POINT p2 = g_polygonVertices[(i + 1) % g_polygonVertices.size()];
+                        DrawLineBresenham(hdc, p1.x, p1.y, p2.x, p2.y, outlineColor);
+                    }
+                }
+                g_polygonVertices.clear();
+                g_drawingPolygon = true;
+            }
+        }
+
         EndPaint(hwnd, &ps);
         return 0;
     }
@@ -991,7 +1028,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentCircleAlgorithm == IterativePolarCircleAlgorithm)
                 {
-                    
+                    DrawCircleIterativePolar(hdc,x1,y1,r,shapeColor);
                 }
                 else if (currentCircleAlgorithm == MidpointCircleAlgorithm)
                 {
@@ -1078,7 +1115,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
             }
             else if (currentFillAlgorithm == ConvexFillAlgorithms)
             {
-                
+                g_polygonVertices.push_back({x, y});
+                g_drawingPolygon = true;
+                InvalidateRect(hwnd, NULL, TRUE);
+                break;
             }
             else if (currentFillAlgorithm == NonConvexFillAlgorithms)
             {
@@ -1278,7 +1318,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
         }
 		break;
     }
-	case WM_CLOSE:
+	case WM_RBUTTONDOWN:
+    if (currentAction != Fill && currentFillAlgorithm != ConvexFillAlgorithms)
+        break;
+    if (g_polygonVertices.size() >= 3)
+    {
+        g_drawingPolygon = false;
+        InvalidateRect(hwnd, NULL, TRUE);
+    }
+    else
+    {
+        MessageBox(hwnd, TEXT("Need at least 3 points to form a polygon. Clearing current points"), TEXT("Info"), MB_OK | MB_ICONINFORMATION);
+        g_polygonVertices.clear();
+        g_drawingPolygon = true;
+        InvalidateRect(hwnd, NULL, TRUE);
+    }
+    break;
+    case WM_CLOSE:
 		DestroyWindow(hwnd); break;
 	case WM_DESTROY:
 		PostQuitMessage(0); break;

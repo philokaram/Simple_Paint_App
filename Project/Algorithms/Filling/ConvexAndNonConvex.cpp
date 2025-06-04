@@ -1,9 +1,123 @@
 #include<list>
 #include<Windows.h>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <climits>
+using namespace std;
 
 //Convex
+const int MAX_SCANLINE_HEIGHT = 1080;
+const int POS_INF_INT = INT_MAX;
+const int NEG_INF_INT = INT_MIN;
 
+struct ScanlineEntry
+{
+    int xLeft;
+    int xRight;
+    ScanlineEntry() : xLeft(POS_INF_INT), xRight(NEG_INF_INT) {}
+};
 
+ScanlineEntry g_edgeTable[MAX_SCANLINE_HEIGHT];
+vector<POINT> g_polygonVertices;
+bool g_drawingPolygon = true;
+
+void DrawPixel(HDC hdc, int x, int y, COLORREF color)
+{
+    if (x >= 0 && y >= 0 && x < GetDeviceCaps(hdc, HORZRES) && y < GetDeviceCaps(hdc, VERTRES))
+    {
+        SetPixel(hdc, x, y, color);
+    }
+}
+void DrawHorizontalLine(HDC hdc, int x1, int x2, int y, COLORREF color)
+{
+    if (x1 > x2)
+    {
+        swap(x1, x2);
+    }
+    for (int x = x1; x <= x2; ++x)
+    {
+        DrawPixel(hdc, x, y, color);
+    }
+}
+
+void InitEdgeTable()
+{
+    for (int i = 0; i < MAX_SCANLINE_HEIGHT; ++i)
+    {
+        g_edgeTable[i] = ScanlineEntry();
+    }
+}
+
+void EdgeToTable(POINT p1, POINT p2)
+{
+    if (p1.y > p2.y)
+    {
+        swap(p1, p2);
+    }
+    if (p1.y == p2.y)
+    {
+        return;
+    }
+    double dx_dy = static_cast<double>(p2.x - p1.x) / (p2.y - p1.y);
+    for (int y = p1.y; y < p2.y; ++y)
+    {
+        if (y >= 0 && y < MAX_SCANLINE_HEIGHT)
+        {
+            double x_intersect = static_cast<double>(p1.x) + (y - p1.y) * dx_dy;
+            int current_x_left = static_cast<int>(ceil(x_intersect));
+            int current_x_right = static_cast<int>(floor(x_intersect));
+            g_edgeTable[y].xLeft = min(g_edgeTable[y].xLeft, current_x_left);
+            g_edgeTable[y].xRight = max(g_edgeTable[y].xRight, current_x_right);
+        }
+    }
+}
+
+void TableToScreen(HDC hdc, COLORREF fillColor)
+{
+    int minY = POS_INF_INT;
+    int maxY = NEG_INF_INT;
+    if (!g_polygonVertices.empty())
+    {
+        minY = g_polygonVertices[0].y;
+        maxY = g_polygonVertices[0].y;
+        for (const auto& p : g_polygonVertices)
+        {
+            minY = min<int>(minY, p.y);
+            maxY = max<int>(maxY, p.y);
+        }
+    }
+    else
+    {
+        return;
+    }
+    minY = max(0, minY);
+    maxY = min(MAX_SCANLINE_HEIGHT - 1, maxY);
+    for (int y = minY; y <= maxY; ++y)
+    {
+        if (g_edgeTable[y].xLeft != POS_INF_INT &&
+            g_edgeTable[y].xRight != NEG_INF_INT)
+        {
+            DrawHorizontalLine(hdc, g_edgeTable[y].xLeft, g_edgeTable[y].xRight, y, fillColor);
+        }
+    }
+}
+
+void FillConvexPolygon(HDC hdc, const vector<POINT>& vertices, COLORREF fillColor)
+{
+    if (vertices.empty() || vertices.size() < 3)
+    {
+        return;
+    }
+    InitEdgeTable();
+    for (size_t i = 0; i < vertices.size(); ++i)
+    {
+        POINT p1 = vertices[i];
+        POINT p2 = vertices[(i + 1) % vertices.size()];
+        EdgeToTable(p1, p2);
+    }
+    TableToScreen(hdc, fillColor);
+}
 
 
 

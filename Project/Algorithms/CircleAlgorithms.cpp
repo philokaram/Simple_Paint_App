@@ -58,7 +58,19 @@ void CirclePolarEff(HDC hdc, int xc, int yc, int r, COLORREF c) {
 
 //Iterative Polar
 
+void DrawCircleIterativePolar(HDC hdc, int xc, int yc, int R, COLORREF c) {
+    double x = R, y = 0;
+    double dTheta = 1.0 / R;
+    double cdt = cos(dTheta), sdt = sin(dTheta);
 
+    DrawPoints(hdc, xc, yc, (int)round(x), (int)round(y), c);
+    while (x > y) {
+        double xTemp = x * cdt - y * sdt;
+        y = y * cdt + x * sdt;
+        x = xTemp;
+        DrawPoints(hdc, xc, yc, (int)round(x), (int)round(y), c);
+    }
+}
 
 
 
