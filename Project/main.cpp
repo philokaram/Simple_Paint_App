@@ -1078,7 +1078,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                 }
                 else if (currentEllipseAlgorithm == MidpointEllipseAlgorithm)
                 {
-                    
+                    EllipseMidPoint(hdc, x1, y1, a, b, shapeColor);
                 }
                 
                 ReleaseDC(hwnd, hdc);
@@ -1192,7 +1192,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT m, WPARAM wp, LPARAM lp)
                     count = 0;
                 }
             }else if(currentShapeFillAlgorithm == SquareFillWithHermiteCurve){
-                
+                if(count == 0){
+                x1 = x;
+                y1 = y;
+                hdc = GetDC(hwnd);
+                SetPixel(hdc,x1,y1,shapeColor);
+                ReleaseDC(hwnd, hdc);
+                count++;
+                } else {
+                    x2 = x, y2 = y;
+                    hdc = GetDC(hwnd);
+                    int side = 2 * sqrt(pow(x1 - x2,2) + pow(y1 - y2,2));
+                        y2 = y1 + side / 2;
+                        x2 = x1 + side / 2;
+                        x1 -= side / 2;
+                        y1 -= side / 2;
+                        DirectLine(hdc,x1,y1,x1,y2,shapeColor);
+                        DirectLine(hdc,x1,y1,x2,y1,shapeColor);
+                        DirectLine(hdc,x2,y2,x1,y2,shapeColor);
+                        DirectLine(hdc,x2,y2,x2,y1,shapeColor);
+                        SquareFillWithHermiteCurveFunctionVertical(hdc,std::min(x2,x1),std::max(x2,x1),std::min(y2,y1),std::max(y2,y1),shapeColor);
+                    ReleaseDC(hwnd, hdc);
+                    count = 0;
+                }
             }else if(currentShapeFillAlgorithm == RectangleFillWithBezierCurveHorizontal){
                 if(count == 0){
                 x1 = x;

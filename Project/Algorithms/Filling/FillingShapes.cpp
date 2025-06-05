@@ -92,7 +92,14 @@ void CircleQuarterFilling(HDC hdc,int xc,int yc,int r,int xf,int yf,COLORREF fil
 
 //Filling Square with Hermit Curve [Vertical]
 
+void SquareFillWithHermiteCurveFunctionVertical(HDC hdc, int xLeft,int xRight,int yTop, int yBottom,COLORREF fillingColor){
 
+    for (int y = yTop; y <= yBottom; y++)
+    {
+        HermiteCurve(hdc,xLeft,y,xRight,y,0,0,0,0,fillingColor);
+    }
+    
+}
 
 // Filling Rectangle with Bezier Curve [horizontal]
 
