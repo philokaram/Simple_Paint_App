@@ -1,1 +1,0 @@
-g++ circle_app.cpp -o circle_app.exe -mwindows
